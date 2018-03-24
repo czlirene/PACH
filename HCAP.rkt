@@ -40,7 +40,7 @@
 
     ; Update
     [Excp   (ex Perm Time Excp)
-            (nil Time)]
+            (ex nil Time)]
     [Time   (t natural)]            ; general time, used in exception
 
     ; Capability
@@ -59,7 +59,6 @@
     ; RED State: Combination of PState and SA
     [RED    (psa Clock AState RState CState P Q QState TrnFn)]
 )
-
 
 ; <------------------- SECURITY AUTOMATON GRAMMAR TEST CASES ------------------->
 (define p0 (term (p 0)))
@@ -135,7 +134,7 @@
 (define tser1 (term (tser 1)))
 (define tser2 (term (tser 2)))
 
-(define nil_t0_excp (term (nil ,t0)))           ; nil excp @ time 0
+(define nil_t0_excp (term (ex nil ,t0)))           ; nil excp @ time 0
 (define excp0 (term (ex ,p0 ,t1 ,nil_t0_excp)))
 (define excp1 (term (ex ,p1 ,t2 ,excp0)))
 
@@ -200,6 +199,111 @@
     ; Testing RED state
     (test-equal (redex-match? HCAP RED psa0) #true)
 )
+
+(define red
+    (reduction-relation HCAP 
+    ; T-ISS, auth server issues a cap to the client
+    ; effect: t_clo +=1, C' = C + {cap (t_as, F(M_q_as))}
+    ; (--> (psa (clo natural)                 AState RState CState_1 P Q initQ TrnFn)
+    ;      (psa (clo ,(+ 1 (term natural)))   AState RState CState_2 P Q initQ TrnFn)
+         
+    ;      ; Get the q_as and t_as from AState
+    ;      (where (Q_AS T_AS) AState)
+
+    ;      ; insert new capability into CState_1 -> CState_2 
+    ;      (where )
+
+    ;      ; Give this transition a name
+    ;      (computed-name (term (issue-cap (T_AS, ))))
+    ; )
+
+    ; T-REQS, the client requests to exercise a stat perm
+    ; T-REQT, the client requests to exercise a tran perm
+    ; T-FSH, garbage collection
+    ; T-UPD, client updates the internal state of auth server
+    ; T-RCV, client asks the resource server to recover a lost ticket
+
+    ; T-DRP, the client accidentally drops some of its tickets [DONE]
+    ; if Tic in C, then can be dropped
+    (--> (psa (clo natural)                 AState RState CState_1 P Q initQ TrnFn)
+         (psa (clo ,(+ 1 (term natural)))   AState RState CState_2 P Q initQ TrnFn)
+
+         ; Find a ticket to drop 
+         (where (Tic_1 ... Tic_2 Tic_3 ...) CState_1)
+
+         ; Remove the ticket, and store into CState_2
+         (where CState_2 ,(remove (term Tic_2) (term CState_1)))
+
+         ; Give this transition a name
+         (computed-name (term (drop Tic_2)))
+    )
+    )
+)
+
+; <------------------- BEGIN: INV-# ------------------->
+; 1. Global clock is larger than all the timestamps within the protocol state
+(define (inv-1? pstate)
+    (let ([clock (second pstate)]
+         [astate (third pstate)]
+         [rstate (fourth pstate)]
+         [cstate (fifth pstate)])
+    (and 
+        (is-clock-larger-tas? clock astate)
+        (is-clock-larger-trs? clock rstate)
+        (is-clock-larger-time? clock cstate)
+    )
+    )
+)
+
+; called from inv-1
+; check if the global clock is larger than the time in auth server
+(define (is-clock-larger-tas? clock astate)
+    (let ([tas (second astate)])
+        (> (second clock) (second tas))
+    )
+)
+
+; called from inv-1
+; check if the global clock is larger than the time in resrc server
+(define (is-clock-larger-trs? clock rstate)
+    (let ([trs (first rstate)])
+        (> (second clock) (second trs))
+    )
+)
+
+; called from inv-1
+; check if global clock is larger than the time in all tickets in client
+(define (is-clock-larger-time? clock cstate)
+    (if (null? cstate)
+        #true
+        (let ([tic (first cstate)])
+            (and 
+                (is-clock-larger-tic? clock tic)
+                (is-clock-larger-time? clock (rest cstate))
+            )
+        )
+    )
+)   
+
+(define (is-clock-larger-tic? clock tic)
+    (if (eqv? (first tic) 'ex)
+        (is-clock-larger-exp? clock tic)
+        (is-clock-larger-cap? clock tic)
+    )
+)
+(define (is-clock-larger-exp? clock exp)
+    (let ([time (third exp)])
+        (> (second clock) (second time))
+    )
+)
+
+(define (is-clock-larger-cap? clock cap)
+    (let ([tser (first cap)])
+        (> (second clock) (second tser))
+    )
+)
+
+
 (module+ test
   (test-results)
 )
