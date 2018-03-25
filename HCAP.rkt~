@@ -57,8 +57,7 @@
     [PState (ps Clock AState RState CState)]    ; protocol state
 
     ; RED State: Combination of PState and SA
-    ; psa Clock QState 
-    [REDState    (psa Clock AState RState CState TrnFn)]
+    [RED    (psa Clock AState RState CState P Q QState TrnFn)]
 )
 
 ; <------------------- SECURITY AUTOMATON GRAMMAR TEST CASES ------------------->
@@ -69,7 +68,7 @@
 
 (define stat_p (term (,p0 ,p1)))
 (define trns_p (term (,p2 ,p3)))
-(define all_p  (term (,p0 ,p1 ,p2 ,p3)))
+(define all_p (term (,p0 ,p1 ,p2 ,p3)))
 
 (define q_undefined (term (q undefined)))
 (define q0 (term (q 0)))
@@ -100,7 +99,6 @@
     (test-equal (redex-match? HCAP P '()) #true)
     (test-equal (redex-match? HCAP P stat_p) #true)
     (test-equal (redex-match? HCAP P trns_p) #true)
-    (test-equal (redex-match? HCAP P all_p) #true)
 
     ; Testing singular qstates
     (test-equal (redex-match? HCAP QState q0) #true)
@@ -169,14 +167,14 @@
 (define cs0 '())                                ; initial state of CS0 (empty list of tickets)
 (define ps0 (term (ps ,clo2 ,as0 ,rs0 ,cs0)))   ; initial state of PS0
 
-(define psa0 (term (psa ,clo2 ,as0 ,rs0 ,cs0 ,all_fn)))
+(define psa0 (term (psa ,clo2 ,as0 ,rs0 ,cs0 ,all_p ,all_q ,q0 ,all_fn)))
 
 (define cs1 (term (,excp1 ,nil_t0_excp)))
 (define cs2 (term (,excp1)))
 
-(define psa1 (term (psa ,clo2 ,as0 ,rs0 ,cs1 ,all_fn)))
-(define psa2 (term (psa ,clo3 ,as0 ,rs0 ,cs1 ,all_fn)))
-
+; (define psa1 (term (psa ,clo2 ,as0 ,rs0 ,cs1 ,all_p ,all_q ,q0 ,all_fn)))
+(define psa1 (term (psa ,clo2 ,as0 ,rs0 ,cs1 ,all_p ,all_q ,q0 ,all_fn)))
+(define psa2 (term (psa ,clo3 ,as0 ,rs0 ,cs1 ,all_p ,all_q ,q0 ,all_fn)))
 
 (module+ test
     ; Testing all the times
@@ -218,12 +216,12 @@
     (test-equal (redex-match? HCAP CState cs1) #true)
 
     ; Testing RED state
-    (test-equal (redex-match? HCAP REDState psa0) #true)
-    (test-equal (redex-match? HCAP REDState psa1) #true)
+    (test-equal (redex-match? HCAP RED psa0) #true)
+    (test-equal (redex-match? HCAP RED psa1) #true)
 )
 
-(define red
-    (reduction-relation HCAP 
+; (define red
+;     (reduction-relation HCAP 
     ; TODO: T-ISS, auth server issues a cap to the client
     ; effect: t_clo +=1, C' = C + {cap (t_as, F(M_q_as))}
     ; (--> (psa (clo natural)                 AState RState CState_1 P Q initQ TrnFn)
@@ -248,56 +246,66 @@
     ; Then new(t_as) = t_clo, new(q_as) = TrnFn(q_as, e)
 
     ; CASE 1: upd(e) = (ex nil(t)), q_as stays the same regardless, t_as' = t_clo
-    (--> (psa Clock_1 (QState TimeAS_1) RState CState TrnFn)
-         (psa Clock_2 (QState TimeAS_2) RState CState TrnFn)
+    ; (--> (psa Clock_1 (QState TimeAS_1) RState CState P Q initQ TrnFn)
+    ;      (psa Clock_2 (QState TimeAS_2) RState CState P Q initQ TrnFn)
 
-         ; increment clock 
-         (where Clock_2 ,(increment-clock (term Clock_1)))
+    ;      ; increment clock 
+    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
 
-         ; find an upd(e) ticket in C
-         (where (Tic_1 ... (ex nil Time) Tic_3 ...) CState)
+    ;      ; find an upd(e) ticket in C
+    ;      (where (Tic_1 ... (ex nil Time) Tic_3 ...) CState)
 
-         ; check the time, and see if TimeAS_2 needs to be updated
-         (where TimeAS_2 ,(recv-update-tas (term TimeAS_1) (term Time) (term natural)))
+    ;      ; check the time, and see if TimeAS_2 needs to be updated
+    ;      (where TimeAS_2 ,(is-texcp-eqv-tas? (term TimeAS_1) (term Time) (term natural)))
 
-         (computed-name (term (update (ex nil Time))))
+    ;      (computed-name (term (update (ex nil Time))))
 
-    )
+    ; )
 
     ; CASE 2: upd(e) = (ex Perm Time Excp)
-    (--> (psa Clock_1 AState_1 RState CState TrnFn)
-         (psa Clock_2 AState_2 RState CState TrnFn)
+    ; (--> (psa Clock_1 AState_1 RState CState P Q initQ TrnFn)
+    ;      (psa Clock_2 AState_2 RState CState P Q initQ TrnFn)
 
-         ; increment clock 
-         (where Clock_2 ,(increment-clock (term Clock_1)))
+    ;      ; increment clock 
+    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
 
-         ; find a upd(e) ticket in C
-         (where (Tic_1 ... Tic_2 Tic_3 ...) CState) 
+    ;      ; find a upd(e) ticket in C
+    ;      (where (Tic_1 ... Tic_2 Tic_3 ...) CState) 
 
-         ; update the AState
-         (where AState_2 ,(recv-update-astate (term AState_1) (term Tic_2) (term natural) (term TrnFn)))
+    ;      ; update the AState
+    ;      (where AState_2 ,(recv-update-astate (term AState_1) (term Tic_2) (term natural) (term TrnFn)))
 
-         ; give this transition a name
-         (computed-name (term (update Tic_2)))
+    ;      ; give this transition a name
+    ;      (computed-name (term (update Tic_2)))
 
-    )
+    ; )
 
     ; TODO: T-RCV, client asks the resource server to recover a lost ticket
 
     ; T-DRP, the client accidentally drops some of its tickets [DONE]
     ; if Tic in C, then can be dropped
-    (--> (psa Clock_1 AState RState CState_1 TrnFn)
-         (psa Clock_2 AState RState CState_2 TrnFn)
+    ; (--> (psa Clock_1 AState RState CState_1 P Q initQ TrnFn)
+    ;      (psa Clock_2 AState RState CState_2 P Q initQ TrnFn)
 
-         (where Clock_2 ,(increment-clock (term Clock_1)))
-         ; Find a ticket to drop 
-         (where (Tic_1 ... Tic_2 Tic_3 ...) CState_1)
+    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
+    ;      ; Find a ticket to drop 
+    ;      (where (Tic_1 ... Tic_2 Tic_3 ...) CState_1)
 
-         ; Remove the ticket, and store into CState_2
-         (where CState_2 ,(remove (term Tic_2) (term CState_1)))
+    ;      ; Remove the ticket, and store into CState_2
+    ;      (where CState_2 ,(remove (term Tic_2) (term CState_1)))
+
+    ;      ; Give this transition a name
+    ;      (computed-name (term (drop Tic_2)))
+    ; )
+(define reduc
+    (reduction-relation HCAP 
+    (--> (psa Clock_1 AState RState CState P Q initQ TrnFn)
+         (psa Clock_1 AState RState CState P Q initQ TrnFn)
+
+        ;  (where Clock_2 ,(increment-clock (term Clock_1)))
 
          ; Give this transition a name
-         (computed-name (term (drop Tic_2)))
+         (computed-name (term (drop-this-shit Clock_1)))
     )
     )
 )
@@ -309,20 +317,18 @@
          (term (clo ,(+ 1 val)))
     )
 )
-(trace increment-clock)
 
 ; /******************** T-UPD(Tic) ********************/
 
 ; Case 1 Handler: Tic = (ex nil Time)
 ; Only needs to update the t_as
-(define (recv-update-tas t_as t_excp t_clo)
+(define (recv-update-tas t_as excp t_clo)
     ; Check for precondition first(e) = t_as
-    (if (is-texcp-eqv-tas? t_as t_excp)
+    (if (is-texcp-eqv-tas? t_as (get-first-excp-time excp))
         (term (tas ,t_clo))     ; return new t_as
         (term ,t_as)            ; return old t_as, no change
     )
 )
-(trace recv-update-tas)
 
 ; Case 2 Handler: Tic = (ex Perm Time Excp)
 ; Need to update both t_as, and q_as 
@@ -397,7 +403,6 @@
 (define (is-texcp-eqv-tas? t_as t_excp)
     (eqv? (second t_as) (second t_excp))
 )
-(trace is-texcp-eqv-tas?)
 
 ; Called from recv-update-tas       (case 1 handler)
 ;             recv-update-astate    (case 2 handler)
@@ -410,8 +415,6 @@
         (get-first-excp-time (fourth excp)) ; otherwise, keep going deeper
     )
 )
-
-(trace get-first-excp-time)
 
 ; /******************** END: T-UPD ********************/
 
@@ -485,10 +488,10 @@
     )
 )
 
-; (module+ test
-;     (test-->>E #:steps 1 red psa1 psa2)
-;     ; (test-->>E #:steps 1 red st1 st2)
-; )
+(module+ test
+    (test-->>E #:steps 1 red psa1 psa2)
+    ; (test-->>E #:steps 1 red st1 st2)
+)
 
 (module+ test
   (test-results)
