@@ -124,10 +124,12 @@
 (define clo1 (term (clo 1)))
 (define clo2 (term (clo 2)))
 (define clo3 (term (clo 3)))
+(define clo4 (term (clo 4)))
 
 (define tas0 (term (tas 0)))
 (define tas1 (term (tas 1)))
 (define tas2 (term (tas 2)))
+(define tas3 (term (tas 3)))
 
 (define trs0 (term (trs 0)))
 (define trs1 (term (trs 1)))
@@ -141,11 +143,8 @@
 (define tser1 (term (tser 1)))
 (define tser2 (term (tser 2)))
 
-; (define nil_t0_excp (term (ex nil ,t0)))           ; nil excp @ time 0
-; (define excp0 (term (ex ,p0 ,t1 ,nil_t0_excp)))
-; (define excp1 (term (ex ,p1 ,t2 ,excp0)))
-
 (define nil_t0_excp (term (ex nil ,t0)))           ; nil excp @ time 0
+(define nil_t1_excp (term (ex nil ,t1)))           ; nil excp @ time 0
 (define excp0 (term (ex ,p1 ,t1 ,nil_t0_excp)))
 (define excp1 (term (ex ,p2 ,t2 ,excp0)))
 
@@ -165,17 +164,27 @@
 (define cap0 (term (,tser0 ,frag0)))
 
 (define as0 (term (,q0 ,tas1)))                 ; initial state of AS0
+(define as1 (term (,q0 ,tas2)))
+
 (define rs0 (term (,trs1 ,nil_t0_excp)))        ; initial state of RS0
+
 (define cs0 '())                                ; initial state of CS0 (empty list of tickets)
-(define ps0 (term (ps ,clo2 ,as0 ,rs0 ,cs0)))   ; initial state of PS0
-
-(define psa0 (term (psa ,clo2 ,as0 ,rs0 ,cs0 ,all_fn)))
-
 (define cs1 (term (,excp1 ,nil_t0_excp)))
 (define cs2 (term (,excp1)))
+(define cs3 (term (,nil_t1_excp)))
 
+(define ps0 (term (ps ,clo2 ,as0 ,rs0 ,cs0)))           ; initial state of PS0
+(define psa0 (term (psa ,clo2 ,as0 ,rs0 ,cs0 ,all_fn)))        ; Initial states: use this for testing for issue
+
+
+;;; psa1 --(T-DRP)-->  psa2
 (define psa1 (term (psa ,clo2 ,as0 ,rs0 ,cs1 ,all_fn)))
-(define psa2 (term (psa ,clo3 ,as0 ,rs0 ,cs1 ,all_fn)))
+(define psa2 (term (psa ,clo3 ,as0 ,rs0 ,cs2 ,all_fn)))
+
+;;; psa1 --T-UPD(nil)--> psa3
+;;; (define psa1 (term (psa ,clo2 ,as0 ,rs0 ,cs3 ,all_fn)))
+;;; (define psa3 (term (psa ,clo3 ,as1 ,rs0 ,cs3 ,all_fn)))
+
 
 
 (module+ test
@@ -241,7 +250,19 @@
 
     ; TODO: T-REQS, the client requests to exercise a stat perm
     ; TODO: T-REQT, the client requests to exercise a tran perm
-    ; TODO: T-FSH, garbage collection
+    ; T-FSH, garbage collection
+    ; new(t_as) = new(t_rs) = t_clo,
+    ; new(e_rs) = nil (t of the outermost e_rs)
+    ; if t_as = first(e_rs) then new(q_as) = TrnFn*(q_as, e_rs)
+    ;;; (--> (psa Clock_1 AState_1 RState_2 CState TrnFn)
+    ;;;      (psa Clock_2 AState_2 RState_2 CState TrnFn)
+
+    ;;;      ; increment clock 
+    ;;;      (where Clock_2 ,(increment-clock (term Clock_1)))
+
+
+
+    ;;; )
 
     ; T-UPD, client updates the internal state of auth server
     ; if Tic in C, and Tic = upd(e), and the first(e) = t_as (THE INNER MOST TIME)
@@ -254,13 +275,19 @@
          ; increment clock 
          (where Clock_2 ,(increment-clock (term Clock_1)))
 
-         ; find an upd(e) ticket in C
-         (where (Tic_1 ... (ex nil Time) Tic_3 ...) CState)
+         ; Get the current tas
+         (where (tas natural_1) TimeAS_1)
 
-         ; check the time, and see if TimeAS_2 needs to be updated
-         (where TimeAS_2 ,(recv-update-tas (term TimeAS_1) (term Time) (term natural)))
+         ; find an upd(e) ticket in C where Time = TimeAS_1
+         (where (Tic_1 ... (ex nil (t natural_1)) Tic_3 ...) CState)
 
-         (computed-name (term (update (ex nil Time))))
+         ; Get the current clock time
+         (where (clo natural_2) Clock_1)
+
+         ; Update the t'as = tclo
+         (where TimeAS_2 (tas natural_2))
+
+         (computed-name (term (update (ex nil (t TimeAS_1)))))
 
     )
 
@@ -272,14 +299,13 @@
          (where Clock_2 ,(increment-clock (term Clock_1)))
 
          ; find a upd(e) ticket in C
-         (where (Tic_1 ... Tic_2 Tic_3 ...) CState) 
+         (where (Tic_1 ... (ex Perm Time Excp) Tic_3 ...) CState) 
 
          ; update the AState
-         (where AState_2 ,(recv-update-astate (term AState_1) (term Tic_2) (term natural) (term TrnFn)))
+         (where AState_2 ,(recv-update-astate (term AState_1) (term Tic_2) (term Clock_1) (term TrnFn)))
 
          ; give this transition a name
          (computed-name (term (update Tic_2)))
-
     )
 
     ; TODO: T-RCV, client asks the resource server to recover a lost ticket
@@ -289,7 +315,9 @@
     (--> (psa Clock_1 AState RState CState_1 TrnFn)
          (psa Clock_2 AState RState CState_2 TrnFn)
 
+         ; increment the clock
          (where Clock_2 ,(increment-clock (term Clock_1)))
+
          ; Find a ticket to drop 
          (where (Tic_1 ... Tic_2 Tic_3 ...) CState_1)
 
@@ -303,7 +331,7 @@
 )
 
 ; <------------------- BEGIN: RED Helpers ------------------->
-
+; Increment global clock value, this will be called from all the trnx
 (define (increment-clock clock)
     (let ([val (second clock)])
          (term (clo ,(+ 1 val)))
@@ -312,17 +340,6 @@
 (trace increment-clock)
 
 ; /******************** T-UPD(Tic) ********************/
-
-; Case 1 Handler: Tic = (ex nil Time)
-; Only needs to update the t_as
-(define (recv-update-tas t_as t_excp t_clo)
-    ; Check for precondition first(e) = t_as
-    (if (is-texcp-eqv-tas? t_as t_excp)
-        (term (tas ,t_clo))     ; return new t_as
-        (term ,t_as)            ; return old t_as, no change
-    )
-)
-(trace recv-update-tas)
 
 ; Case 2 Handler: Tic = (ex Perm Time Excp)
 ; Need to update both t_as, and q_as 
@@ -346,7 +363,7 @@
 ; return AState
 (define (recv-compute-astate2 qstate excp t_clo TrnFn)
     (let ([newQAS (recv-compute-qas qstate excp TrnFn)]
-          [newTAS (term (tas ,t_clo))])
+          [newTAS (term (tas (second t_clo)))])
          (term (,newQAS ,newTAS))
     )
 )
@@ -485,10 +502,10 @@
     )
 )
 
-; (module+ test
-;     (test-->>E #:steps 1 red psa1 psa2)
-;     ; (test-->>E #:steps 1 red st1 st2)
-; )
+(module+ test
+    ;;; (test-->>E #:steps 1 red psa1 psa2)         ; testing T_DRP
+    ;;; (test-->>E #:steps 1 red psa1 psa3)         ; testing T-UPD(nil)
+)
 
 (module+ test
   (test-results)
