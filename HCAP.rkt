@@ -92,11 +92,12 @@
 (define par_fn3 (term (,q1 ,p2 ,q2)))       ;q1 -> q2 when p2
 (define par_fn4 (term (,q2 ,p3 ,q3)))       ;q2 -> q3 when p3
 (define par_fn5 (term (,q3 ,p1 ,q3)))
+(define par_fn6 (term (,q0 ,p4 ,q1)))
 
 (define par_fn0 (term (,q1 ,p4 ,q_unknown)))
 
 ; TrnFn, the list of all the functions defined in the security automaton
-(define trn_fns (term (,par_fn1 ,par_fn2 ,par_fn3 ,par_fn4 ,par_fn0)))
+(define trn_fns (term (,par_fn1 ,par_fn2 ,par_fn3 ,par_fn4 ,par_fn5 ,par_fn6 ,par_fn0)))
 
 (define stat_par_fns (term (,par_fn2)))                         ; list of stationary partial functions
 (define tran_par_fns (term (,par_fn1 ,par_fn3 ,par_fn4)))       ; list of transitioning partial functions
@@ -191,15 +192,17 @@
 (define rs0 (term (,trs1 ,excp_nil_0)))         ; Initial state, R0 = (1, nil(0))
 (define rs1 (term (,trs2 ,excp1)))
 (define rs2 (term (,trs2 ,excp2)))
+(define rs3 (term (,trs2 ,excp1)))
 
 ; Frag (TrnFn TrnFn)
 (define frag_undefined (term undefined))        ; Undefined ...
 (define frag_unknown (term unknown))            ; Happens when exercising TrnP to a (q unknown)
-(define frag_q0 (term ((,par_fn1) (,par_fn2 ,par_fn3 ,par_fn0))))
+(define frag_q0 (term ((,par_fn1) (,par_fn2 ,par_fn3 ,par_fn0 ,par_fn6))))
 (define frag_q1 (term ((,par_fn2 ,par_fn3 ,par_fn0) (,par_fn4 ,par_fn5))))
 
 ; Capability
 (define cap0 (term (,tser1 ,frag_q0)))
+(define cap1 (term (,tser2 ((,par_fn2) (,par_fn3 ,par_fn0)))))
 
 ; Client State
 (define cs0 '())                    ; Initial state, C0 = empty
@@ -277,10 +280,53 @@
 (define red
     (reduction-relation HCAP 
 
-    ; T-FSH, garbage collection [DONE]
-    ; new(t_as) = new(t_rs) = t_clo,
-    ; new(e_rs) = nil (t of the outermost e_rs)
-    ; if t_as = first(e_rs) then new(q_as) = TrnFn*(q_as, e_rs)
+    ; T-ISS, auth server issues a new cap to client
+    ; C' = C + {cap (t_as, F @q_as)}
+    (--> (psa Clock_1 AState RState CState_1 TrnFn)
+         (psa Clock_2 AState RState CState_2 TrnFn)
+
+         ; increment clock
+         (where Clock_2 ,(increment-clock (term Clock_1)))
+
+         ; create a new cap, and insert into CState
+         (where CState_2 ,(issue-cap (term CState_1) (term AState) (term TrnFn)))
+
+         ; give this transition a name
+         (computed-name (term (issue)))
+    )
+
+    ; ; T-REQS, client requests to exercise a stat permission [ NOT TESTED ]
+    ; ; if tic in C, tic = cap(tser, F), tser >= trs, tser >= last(ers), F=(defs, n*), defs(n*) = SP, p in SP
+    ; ; THEN if tser > last(ers) --> e'rs = nil(tser) 
+    ; (--> (psa Clock_1 AState RState_1 CState TrnFn)
+    ;      (psa Clock_2 AState RState_2 CState TrnFn)
+         
+    ;      ; increment clock
+    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
+
+    ;      ; find a cap ticket 
+    ;      (where (Tic_1 ... (TimeSER Frag) Tic_3 ...) CState)
+         
+    ;      ; find a stationary permission in the fragment
+    ;      (where (StatPerms TranPerms) Frag)
+    ;      (where (Perm_1 ... (QState_1 Perm_2 QState_1) Perm_3 ...) StatPerms)
+
+    ;      (where RState_2 ,(req-stat (term RState_1) (term TimeSER)))
+         
+    ;      ; make sure that all the preconditions are satisfied
+    ;      (side-condition (not (eqv? (term RState_1) (term RState_2))))
+
+    ;      ; give this transition a name
+    ;      (computed-name (term (reqS Perm_2 (TimeSER Frag))))
+
+    ; )
+
+    ; TODO: T-REQT
+
+    ; ; T-FSH, garbage collection [DONE]
+    ; ; new(t_as) = new(t_rs) = t_clo,
+    ; ; new(e_rs) = nil (t of the outermost e_rs)
+    ; ; if t_as = first(e_rs) then new(q_as) = TrnFn*(q_as, e_rs)
     ; (--> (psa Clock_1 AState_1 (TimeRS_1 Excp_1) CState TrnFn)
     ;      (psa Clock_2 AState_2 (TimeRS_2 Excp_2) CState TrnFn)
 
@@ -297,11 +343,11 @@
     ;      (computed-name (term (flush)))
     ; )
 
-    ; T-UPD, client updates the internal state of auth server
-    ; if Tic in C, and Tic = upd(e), and the first(e) = t_as (THE INNERMOST TIME)
-    ; Then new(t_as) = t_clo, new(q_as) = TrnFn(q_as, e)
+    ; ; T-UPD, client updates the internal state of auth server
+    ; ; if Tic in C, and Tic = upd(e), and the first(e) = t_as (THE INNERMOST TIME)
+    ; ; Then new(t_as) = t_clo, new(q_as) = TrnFn(q_as, e)
 
-    ; CASE 1: upd(e) = (ex nil(t)), q_as stays the same regardless, t_as' = t_clo [DONE]
+    ; ; CASE 1: upd(e) = (ex nil(t)), q_as stays the same regardless, t_as' = t_clo [DONE]
     ; (--> (psa Clock_1 (QState TimeAS_1) RState CState TrnFn)
     ;      (psa Clock_2 (QState TimeAS_2) RState CState TrnFn)
 
@@ -320,29 +366,29 @@
     ;      ; Update the t'as = tclo
     ;      (where TimeAS_2 (tas natural_2))
 
+    ;      ; Give this transition a name
     ;      (computed-name (term (update-nil (ex nil (t TimeAS_1)))))
-
     ; )
 
-    ; CASE 2: upd(e) = (ex Perm Time Excp) 
-    (--> (psa Clock_1 AState_1 RState CState TrnFn)
-         (psa Clock_2 AState_2 RState CState TrnFn)
+    ; ; CASE 2: upd(e) = (ex Perm Time Excp)  [DONE]
+    ; (--> (psa Clock_1 AState_1 RState CState TrnFn)
+    ;      (psa Clock_2 AState_2 RState CState TrnFn)
 
-         ; increment clock 
-         (where Clock_2 ,(increment-clock (term Clock_1)))
+    ;      ; increment clock 
+    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
 
-         ; find a upd(e) ticket in C
-         (where (Tic_1 ... (ex Perm Time Excp) Tic_3 ...) CState) 
+    ;      ; find a upd(e) ticket in C
+    ;      (where (Tic_1 ... (ex Perm Time Excp) Tic_3 ...) CState) 
 
-         ; update the AState
-         (where AState_2 ,(update-as (term AState_1) (term (ex Perm Time Excp)) (term Clock_1) (term TrnFn)))
+    ;      ; update the AState
+    ;      (where AState_2 ,(update-as (term AState_1) (term (ex Perm Time Excp)) (term Clock_1) (term TrnFn)))
 
-         ; make sure that AState_2 does change in order for the clock to change
-         (side-condition (not (eqv? (term AState_2) (term AState_1))))
+    ;      ; make sure that AState_2 does change in order for the clock to change
+    ;      (side-condition (not (eqv? (term AState_2) (term AState_1))))
 
-         ; give this transition a name
-         (computed-name (term (update-excp (ex Perm Time Excp))))
-    )
+    ;      ; give this transition a name
+    ;      (computed-name (term (update-excp (ex Perm Time Excp))))
+    ; )
     
     ; TODO: T-RCV, client asks the resource server to recover a lost ticket
 
@@ -437,14 +483,151 @@
 )
 (trace apply-excp-perm-to-state)
 
+; Create a new Cap(t_as, Fq_as)
+; Param: QState TimeX TrnFn
+; Return: Cap
+(define (create-cap qstate time TrnFn)
+    (let ([t_val (second time)]
+          [frag (create-frag qstate TrnFn)])
+        (term ((tser ,t_val) ,frag))
+    )
+)
+(trace create-cap)
+
+; Create a new Frag(TrnFn TrnFn) based on QState
+; Param: QState TrnFn
+; Return: Frag
+(define (create-frag qstate TrnFn)
+    (let ([stat_tran_fns (find-all-par-fns-for-state qstate TrnFn)])       ; Create the stationary and transition TrnFn for current qstate                ; create the propagation TrFn 
+        (let ([prop-qstates (get-list-of-prop-qstates stat_tran_fns qstate)])
+            (let ([prop_fns (find-all-prop-par-fns prop-qstates qstate TrnFn)])        ; Create the propagation list of functions for all the prop-qstates
+                (term (,stat_tran_fns ,prop_fns))
+            )
+        )
+    )
+)
+(trace create-frag)
+
+; Find all the partial functions that corresponds to all the propagating states found in stat_tran_fns
+; Param: Q QState TrnFn
+; Return: TrnFn
+(define (find-all-prop-par-fns prop_qstates qstate TrnFn)
+    (if (null? prop_qstates)
+        (remove null prop_qstates)
+        (let ([prop_qstate (first prop_qstates)])
+            (append (find-all-par-fns-for-state prop_qstate TrnFn) (find-all-prop-par-fns (rest prop_qstates) qstate TrnFn))
+        )
+    )
+)
+(trace find-all-prop-par-fns)
+
+; Retrieve a list of all the propagating states based on the list of permissions 
+; Param: TrnFn QState
+; Return: Q 
+(define (get-list-of-prop-qstates perms qstate)
+    (if (null? perms)
+        (remove null perms)
+        (let ([perm (first perms)])
+            (let ([prop_qstate (third perm)])
+            ; check if there is another state to propagate to 
+                (case (prop-to-qstate qstate perm)
+                    ; Permission is stationary, go to next
+                    [(-1) (get-list-of-prop-qstates (rest perms) qstate)]
+                    ; done, return result
+                    [( 0) perms]
+                    ; it's a propagating state, check if it already exists in the list of prop-qstates
+                    [(+1) (if (memv prop_qstate (get-list-of-prop-qstates (rest perms) qstate))
+                              ; it already exists, move to next
+                              (get-list-of-prop-qstates (rest perms) qstate)
+                              ; add the qstate to the list, and check the rest
+                              (cons prop_qstate (get-list-of-prop-qstates (rest perms) qstate)))]
+                )
+            )
+        )
+    )
+)
+(trace get-list-of-prop-qstates)
+
+; Determine if the current partial function contains a propagating qstate
+; Return: -1 or +1
+(define (prop-to-qstate qstate permFn)
+    (let ([prop_qstate (third permFn)])
+        (if (null? permFn)
+            (0)
+            (cond 
+                [(not (eqv? qstate prop_qstate))    +1]             ; partial function contains a propagating qstate
+                [else                               -1]
+            )
+        )
+    )
+)
+; Retain only partial functions that are describe a permission for qstate 
+; Param: QState TrnFn
+; Return: TrnFn
+(define (find-all-par-fns-for-state qstate TrnFn)
+    (if (null? TrnFn)
+        (remove null TrnFn)
+        (let ([parFn (first TrnFn)]) 
+            (case (perm-for-qstate qstate parFn)
+                ; not a stat perm for qstate, go to next fn
+                [(-1) (find-all-par-fns-for-state qstate (rest TrnFn))]
+                ; done, return the TrnFn
+                [( 0) TrnFn]
+                ; current ParFn is a stat perm for qstate, keep it
+                [(+1) (cons parFn (find-all-par-fns-for-state qstate (rest TrnFn)))]
+            )
+        )
+    )
+)
+(trace find-all-par-fns-for-state)
+
+; Determine if current partial function contains a permission for the qstate
+; Return: -1 or +1
+(define (perm-for-qstate qstate ParFn)
+    (if (null? ParFn)
+        (0)
+        (cond
+            [(is-par-fn-for-qstate? qstate ParFn) +1]
+            [else                                 -1]
+        )
+    )
+)
+(trace perm-for-qstate)
+
 ; ***************** PREDICATES ***************************
 ; Check if 2 times are the same value.
 ; Param Types: Clock, TimeAS, TimeRS, Time, TimeSER
 ; Return boolean
 (define (are-times-eqv? time_1 time_2)
-    (eqv? (second time_1) (second time_2))
+    (= (second time_1) (second time_2))
 )
 (trace are-times-eqv?)
+
+; Check if time1 is greater or equal to time2
+; Param Types: Clock, TimeAS, TimeRS, Time, TimeSER
+; return boolean
+(define (is-time1-ge-time2? time_1 time_2)
+    (>= (second time_1) (second time_2))
+)
+(trace is-time1-ge-time2?)
+
+; Check if time1 is strictly greater than time2
+; Param Types: Clock, TimeAS, TimeRS, Time, TimeSER
+; return boolean
+(define (is-time1-gt-time2? time_1 time_2)
+    (> (second time_1) (second time_2))
+)
+(trace is-time1-gt-time2?)
+
+; Check if a given Partial Function contains a permission for the specified QState
+; Param: QState ParFn
+; Return: boolean
+(define (is-par-fn-for-qstate? qstate ParFn)
+    (let ([fn_q1    (first ParFn)])
+        (eqv? qstate fn_q1)
+    )
+)
+(trace is-par-fn-for-qstate?)
 
 ; helper tests
 (module+ test
@@ -458,12 +641,52 @@
     ; Testing generate-new-astate
     (test-equal (generate-new-astate q0 excp1 clo3 trn_fns) as2)
 
+    ; Testing create-cap
+    ; (test-equal (create-cap q1 tas2 trn_fns) cap1)
+
     ; Testing are-times-eqv?
     (test-equal (are-times-eqv? tas0 tser2) #false)
     (test-equal (are-times-eqv? clo1 tas1) #true)
-
 )
 
+; /******************** T-ISS ********************/
+; Update the CState by first creating a new Cap 
+; Param; CState AState TrnFn
+; Return: CState
+(define (issue-cap cstate astate TrnFn)
+    (let ([q_as (first astate)]
+          [t_as (second astate)])
+        (append cstate (create-cap q_as t_as TrnFn))
+    )
+)
+
+; /******************** END: T-ISS ********************/
+
+; /******************** T-REQS(P, Tic) ********************/
+; Update the RState 
+; Param: RState TimeSER
+; Return RState
+; TODO: Get confirmation of which one to use, > or >=
+(define (req-stat rstate t_ser)
+    (let ([t_rs (first rstate)]
+          [e_rs (second rstate)]) 
+        (if (and (is-time1-ge-time2? t_ser t_rs)                    ; if tser >= trs
+                 (is-time1-gt-time2? t_ser (third e_rs)))            ; && tser > last(e_rs)
+                ;  (is-time1-ge-time2? tser (third e_rs)))            ; && tser >= last(e_rs)
+            (term (,t_rs (ex nil (t ,t_ser))))
+            (term ,rstate)                                  ; return rstate, nothing changed
+        )
+    )
+)
+(trace req-stat)
+
+(module+ test
+    ; Testing req-state
+    (test-equal (req-stat rs1 tser3) (term (,trs2 (ex nil (t ,tser3)))))        ; tser(3) >= trs(2), tser(3) > ers(2), new rstate
+    (test-equal (req-stat rs1 tser2) rs1)                                       ; tser(2) = trs(2), but tser(2) = ers(2), no change
+)
+
+; /******************** END: T-REQS ********************/
 
 ; /******************** T-FSH ********************/
 ; Update the AState with 
