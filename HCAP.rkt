@@ -177,6 +177,7 @@
 (define as0 (term (,q0 ,tas1)))                 ; Initial state, A0 = (q0, 1)
 (define as1 (term (,q0 ,tas2)))
 (define as2 (term (,q1 ,tas3)))
+(define as3 (term (,q0 ,tas3)))
 
 ; Exception (ex Perm Time Excp) or (ex nil Time)
 (define excp_nil_0 (term (ex nil ,t0)))         ; Initial exception, nil(0)
@@ -272,25 +273,25 @@
 (define red
     (reduction-relation HCAP 
 
-    ; ; T-FSH, garbage collection [DONE]
-    ; ; new(t_as) = new(t_rs) = t_clo,
-    ; ; new(e_rs) = nil (t of the outermost e_rs)
-    ; ; if t_as = first(e_rs) then new(q_as) = TrnFn*(q_as, e_rs)
-    ; (--> (psa Clock_1 AState_1 (TimeRS_1 Excp_1) CState TrnFn)
-    ;      (psa Clock_2 AState_2 (TimeRS_2 Excp_2) CState TrnFn)
+    ; T-FSH, garbage collection [DONE]
+    ; new(t_as) = new(t_rs) = t_clo,
+    ; new(e_rs) = nil (t of the outermost e_rs)
+    ; if t_as = first(e_rs) then new(q_as) = TrnFn*(q_as, e_rs)
+    (--> (psa Clock_1 AState_1 (TimeRS_1 Excp_1) CState TrnFn)
+         (psa Clock_2 AState_2 (TimeRS_2 Excp_2) CState TrnFn)
 
-    ;      ; increment clock 
-    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
+         ; increment clock 
+         (where Clock_2 ,(increment-clock (term Clock_1)))
 
-    ;      ; Update the AState
-    ;      (where AState_2 ,(flush-as (term AState_1) (term Excp_1) (term Clock_1) (term TrnFn)))
+         ; Update the AState
+         (where AState_2 ,(flush-as (term AState_1) (term Excp_1) (term Clock_1) (term TrnFn)))
 
-    ;      ; Update the RState 
-    ;      (where TimeRS_2 ,(flush-rs-update-time (term TimeRS_1) (term Clock_1)))
-    ;      (where Excp_2 ,(flush-rs-update-excp (term Excp_1)))
+         ; Update the RState 
+         (where TimeRS_2 ,(flush-rs-update-time (term TimeRS_1) (term Clock_1)))
+         (where Excp_2 ,(flush-rs-update-excp (term Excp_1)))
 
-    ;      (computed-name (term (flush)))
-    ; )
+         (computed-name (term (flush)))
+    )
 
     ; T-UPD, client updates the internal state of auth server
     ; if Tic in C, and Tic = upd(e), and the first(e) = t_as (THE INNERMOST TIME)
@@ -465,19 +466,19 @@
 ;;; If TimeAS = first(e_rs) then QStateAS = TrnFn*(q_as, e_rs)
 (define (flush-as astate e_rs t_clo TrnFn)
     (let ([q_as (first  astate)]
-          [t_as (second astate)])
+          [t_as (second astate)]
+          [c_val (second t_clo)])
         (if (are-times-eqv? t_as (get-first-excp-time e_rs))
-            (generate-new-astate q_as e_rs t_clo TrnFn)            ; return new AState
-            (term ,astate)                                         ; return old AState, no change
+            (generate-new-astate q_as e_rs t_clo TrnFn)            ; return (QState', TimeAS')
+            (term (,q_as (tas ,c_val)))                            ; return (QState, TimeAS')
         )
     )
 )
 (trace flush-as)
 
-; Updates the RState with
-;;; TimeRS' = Clock
-;;; ExcpRS' = (ex nil (t last of ers))
 ; Update the TimeRS to the Clock 
+; Param: TimeRS Clock
+; Return TimeRS
 (define (flush-rs-update-time t_rs t_clo)
     (let ([clo (second t_clo)])
         (term (trs ,clo))
@@ -485,14 +486,30 @@
 )
 (trace flush-rs-update-time)
 
-; Called from flush-rs
 ; Update the Excp to (ex nil (t last(ers)))
+; Param: Excp
+; Return: Excp of the form (ex nil Time)
 (define (flush-rs-update-excp excp)
     (let ([new_time (second (third excp))])
         (term (ex nil (t ,new_time)))
     )
 )
 (trace flush-rs-update-excp)
+
+; T-FSH tests 
+(module+ test
+    ; Testing flush-as
+    (test-equal (flush-as as0 excp2 clo3 trn_fns) as2)      ; q_as(0) -> q_as(1), t_as(1) -> t_as(3)
+    (test-equal (flush-as as1 excp1 clo3 trn_fns) as3)      ; q_as stays, time changes
+
+    ; Testing flush-rs-update-time
+    (test-equal (flush-rs-update-time trs0 clo1) trs1)      ; Changing the times
+    (test-equal (flush-rs-update-time trs1 clo3) trs3)
+
+    ; Testing flush-rs-update-excp
+    (test-equal (flush-rs-update-excp excp2) (term (ex nil ,t2)))       ; make sure the exceptions' time is changed
+    (test-equal (flush-rs-update-excp excp0) (term (ex nil ,t1)))
+)
 
 ; /******************** END: T-FSH ********************/
 
