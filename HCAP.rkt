@@ -204,10 +204,14 @@
 ; Client State
 (define cs0 '())                    ; Initial state, C0 = empty
 (define cs1 (term (,cap0 ,excp_nil_0 ,excp_nil_1 ,excp0 ,excp1)))
+(define cs2 (term (,excp0)))        
+(define cs3 (term (,excp2)))        
 
 ; RED State
 (define psa0 (term (psa ,clo2 ,as0 ,rs0 ,cs0 ,trn_fns)))
 (define psa1 (term (psa ,clo3 ,as0 ,rs2 ,cs1 ,trn_fns)))
+(define psa2 (term (psa ,clo3 ,as0 ,rs2 ,cs2 ,trn_fns)))
+(define psa3 (term (psa ,clo3 ,as0 ,rs2 ,cs3 ,trn_fns)))
 
 (module+ test
     ; Testing all the times
@@ -277,67 +281,68 @@
     ; new(t_as) = new(t_rs) = t_clo,
     ; new(e_rs) = nil (t of the outermost e_rs)
     ; if t_as = first(e_rs) then new(q_as) = TrnFn*(q_as, e_rs)
-    (--> (psa Clock_1 AState_1 (TimeRS_1 Excp_1) CState TrnFn)
-         (psa Clock_2 AState_2 (TimeRS_2 Excp_2) CState TrnFn)
+    ; (--> (psa Clock_1 AState_1 (TimeRS_1 Excp_1) CState TrnFn)
+    ;      (psa Clock_2 AState_2 (TimeRS_2 Excp_2) CState TrnFn)
 
-         ; increment clock 
-         (where Clock_2 ,(increment-clock (term Clock_1)))
+    ;      ; increment clock 
+    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
 
-         ; Update the AState
-         (where AState_2 ,(flush-as (term AState_1) (term Excp_1) (term Clock_1) (term TrnFn)))
+    ;      ; Update the AState
+    ;      (where AState_2 ,(flush-as (term AState_1) (term Excp_1) (term Clock_1) (term TrnFn)))
 
-         ; Update the RState 
-         (where TimeRS_2 ,(flush-rs-update-time (term TimeRS_1) (term Clock_1)))
-         (where Excp_2 ,(flush-rs-update-excp (term Excp_1)))
+    ;      ; Update the RState 
+    ;      (where TimeRS_2 ,(flush-rs-update-time (term TimeRS_1) (term Clock_1)))
+    ;      (where Excp_2 ,(flush-rs-update-excp (term Excp_1)))
 
-         (computed-name (term (flush)))
-    )
+    ;      (computed-name (term (flush)))
+    ; )
 
     ; T-UPD, client updates the internal state of auth server
     ; if Tic in C, and Tic = upd(e), and the first(e) = t_as (THE INNERMOST TIME)
     ; Then new(t_as) = t_clo, new(q_as) = TrnFn(q_as, e)
 
-    ; CASE 1: upd(e) = (ex nil(t)), q_as stays the same regardless, t_as' = t_clo
-    (--> (psa Clock_1 (QState TimeAS_1) RState CState TrnFn)
-         (psa Clock_2 (QState TimeAS_2) RState CState TrnFn)
-
-         ; increment clock 
-         (where Clock_2 ,(increment-clock (term Clock_1)))
-
-         ; Get the current tas
-         (where (tas natural_1) TimeAS_1)
-
-         ; find an upd(e) ticket in C where Time = TimeAS_1
-         (where (Tic_1 ... (ex nil (t natural_1)) Tic_3 ...) CState)
-
-         ; Get the current clock time
-         (where (clo natural_2) Clock_1)
-
-         ; Update the t'as = tclo
-         (where TimeAS_2 (tas natural_2))
-
-         (computed-name (term (update-nil (ex nil (t TimeAS_1)))))
-
-    )
-
-    ; ; CASE 2: upd(e) = (ex Perm Time Excp)
-    ; ;;; PROBLEM: Clock will increment even if the IT DOESN'T UPDATE
-    ; ;;; TODO: Fix the Clock problem
-    ; (--> (psa Clock_1 AState_1 RState CState TrnFn)
-    ;      (psa Clock_2 AState_2 RState CState TrnFn)
+    ; CASE 1: upd(e) = (ex nil(t)), q_as stays the same regardless, t_as' = t_clo [DONE]
+    ; (--> (psa Clock_1 (QState TimeAS_1) RState CState TrnFn)
+    ;      (psa Clock_2 (QState TimeAS_2) RState CState TrnFn)
 
     ;      ; increment clock 
     ;      (where Clock_2 ,(increment-clock (term Clock_1)))
 
-    ;      ; find a upd(e) ticket in C
-    ;      (where (Tic_1 ... (ex Perm Time Excp) Tic_3 ...) CState) 
+    ;      ; Get the current tas
+    ;      (where (tas natural_1) TimeAS_1)
 
-    ;      ; update the AState
-    ;      (where AState_2 ,(recv-update-astate (term AState_1) (term Excp) (term Clock_1) (term TrnFn)))
+    ;      ; find an upd(e) ticket in C where Time = TimeAS_1
+    ;      (where (Tic_1 ... (ex nil (t natural_1)) Tic_3 ...) CState)
 
-    ;      ; give this transition a name
-    ;      (computed-name (term (update-excp (ex Perm Time Excp))))
+    ;      ; Get the current clock time
+    ;      (where (clo natural_2) Clock_1)
+
+    ;      ; Update the t'as = tclo
+    ;      (where TimeAS_2 (tas natural_2))
+
+    ;      (computed-name (term (update-nil (ex nil (t TimeAS_1)))))
+
     ; )
+
+    ; CASE 2: upd(e) = (ex Perm Time Excp) 
+    (--> (psa Clock_1 AState_1 RState CState TrnFn)
+         (psa Clock_2 AState_2 RState CState TrnFn)
+
+         ; increment clock 
+         (where Clock_2 ,(increment-clock (term Clock_1)))
+
+         ; find a upd(e) ticket in C
+         (where (Tic_1 ... (ex Perm Time Excp) Tic_3 ...) CState) 
+
+         ; update the AState
+         (where AState_2 ,(update-as (term AState_1) (term (ex Perm Time Excp)) (term Clock_1) (term TrnFn)))
+
+         ; make sure that AState_2 does change in order for the clock to change
+         (side-condition (not (eqv? (term AState_2) (term AState_1))))
+
+         ; give this transition a name
+         (computed-name (term (update-excp (ex Perm Time Excp))))
+    )
     
     ; TODO: T-RCV, client asks the resource server to recover a lost ticket
 
@@ -464,6 +469,8 @@
 ; Update the AState with 
 ;;; TimeAS' = Clock
 ;;; If TimeAS = first(e_rs) then QStateAS = TrnFn*(q_as, e_rs)
+; Param: AState Excp Clock TrnFn
+; Return: AState
 (define (flush-as astate e_rs t_clo TrnFn)
     (let ([q_as (first  astate)]
           [t_as (second astate)]
@@ -512,6 +519,32 @@
 )
 
 ; /******************** END: T-FSH ********************/
+
+; /******************** T-UPD(Tic) ********************/
+; If first(e) = tas, then update the AState with 
+;;; TimeAS' = Clock
+;;; QStateAS = TrnFn*(qas, excp)
+; Param: AState Excp Clock TrnFn
+; Return: AState 
+(define (update-as astate excp t_clo TrnFn)
+    (let ([q_as (first astate)]
+          [t_as (second astate)]
+          [c_val (second t_clo)])
+        (if (are-times-eqv? t_as (get-first-excp-time excp))
+            (generate-new-astate q_as excp t_clo TrnFn)         ; change the time and qstate
+            (term ,astate)                                      ; return old astate
+        )
+    )
+)
+
+; T-UPD tests
+(module+ test
+    ; Testing update-as 
+    (test-equal (update-as as0 excp0 clo3 trn_fns) as0)         ; time are not the same, no change
+    (test-equal (update-as as0 excp2 clo3 trn_fns) as2)         ; time are the same, new as (q1, 3)
+)
+
+; /******************** END: T-UPD ********************/
 
 (module+ test
   (test-results)
