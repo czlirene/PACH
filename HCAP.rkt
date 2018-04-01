@@ -209,6 +209,7 @@
 (define cs1 (term (,cap0 ,excp_nil_0 ,excp_nil_1 ,excp0 ,excp1)))
 (define cs2 (term (,excp0)))        
 (define cs3 (term (,excp2)))        
+(define cs4 (term (,cap0 ,cap1)))
 
 ; RED State
 (define psa0 (term (psa ,clo2 ,as0 ,rs0 ,cs0 ,trn_fns)))
@@ -487,9 +488,9 @@
 ; Param: QState TimeX TrnFn
 ; Return: Cap
 (define (create-cap qstate time TrnFn)
-    (let ([t_val (second time)]
+    (let ([t_ser (term (tser ,(second time)))]
           [frag (create-frag qstate TrnFn)])
-        (term ((tser ,t_val) ,frag))
+        (term (,t_ser ,frag))
     )
 )
 (trace create-cap)
@@ -656,10 +657,11 @@
 (define (issue-cap cstate astate TrnFn)
     (let ([q_as (first astate)]
           [t_as (second astate)])
-        (append cstate (create-cap q_as t_as TrnFn))
+        (append cstate (list(create-cap q_as t_as TrnFn)))
     )
 )
 
+; (redex-match? HCAP CState (append cs0 (list(create-cap q0 tas2 trn_fns))))
 ; /******************** END: T-ISS ********************/
 
 ; /******************** T-REQS(P, Tic) ********************/
