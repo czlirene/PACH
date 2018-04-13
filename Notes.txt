@@ -1,0 +1,354 @@
+;     ; T-ISS, auth server issues a cap to the client
+;     ; effect: t_clo +=1, C' = C + {cap (t_as, F(M_q_as))}
+;     (--> (psa Clock_1 AState RState CState_1 TrnFn)
+;          (psa Clock_2 AState RState CState_2 TrnFn)
+
+;          ; increment clock 
+;          (where Clock_2 ,(increment-clock (term Clock_1)))
+         
+;          ; Create new capability, add it to CState_2
+;         ;;;  (where CState_2 ,(issue-cap (term CState_1) (term AState) (term TrnFn)))            
+         
+;          ; Give this transition a name
+;          (computed-name (term (issue cap)))
+;     )
+
+;     ; TODO: T-REQS, the client requests to exercise a stat perm
+;     ; TODO: T-REQT, the client requests to exercise a tran perm
+
+;     ; T-FSH, garbage collection
+;     ; new(t_as) = new(t_rs) = t_clo,
+;     ; new(e_rs) = nil (t of the outermost e_rs)
+;     ; if t_as = first(e_rs) then new(q_as) = TrnFn*(q_as, e_rs)
+;     (--> (psa Clock_1 AState_1 RState_1 CState TrnFn)
+;          (psa Clock_2 AState_2 RState_2 CState TrnFn)
+
+;          ; increment clock 
+;          (where Clock_2 ,(increment-clock (term Clock_1)))
+
+;          ; Update the RState (t_rs e_rs)
+;          (where RState_2 ,(flush-rs (term RState_1) (term Clock_1)))
+
+;          ; Update the AState
+;          (where AState_2 ,(flush-as (term AState_1) (term RState_1) (term Clock_1) (term TrnFn)))
+
+;          (computed-name (term (flush)))
+;     )
+
+;     ; T-UPD, client updates the internal state of auth server
+;     ; if Tic in C, and Tic = upd(e), and the first(e) = t_as (THE INNERMOST TIME)
+;     ; Then new(t_as) = t_clo, new(q_as) = TrnFn(q_as, e)
+
+;     ; CASE 1: upd(e) = (ex nil(t)), q_as stays the same regardless, t_as' = t_clo
+;     (--> (psa Clock_1 (QState TimeAS_1) RState CState TrnFn)
+;          (psa Clock_2 (QState TimeAS_2) RState CState TrnFn)
+
+;          ; increment clock 
+;          (where Clock_2 ,(increment-clock (term Clock_1)))
+
+;          ; Get the current tas
+;          (where (tas natural_1) TimeAS_1)
+
+;          ; find an upd(e) ticket in C where Time = TimeAS_1
+;          (where (Tic_1 ... (ex nil (t natural_1)) Tic_3 ...) CState)
+
+;          ; Get the current clock time
+;          (where (clo natural_2) Clock_1)
+
+;          ; Update the t'as = tclo
+;          (where TimeAS_2 (tas natural_2))
+
+;          (computed-name (term (update-nil (ex nil (t TimeAS_1)))))
+
+;     )
+
+;     ; CASE 2: upd(e) = (ex Perm Time Excp)
+;     ;;; PROBLEM: Clock will increment even if the IT DOESN'T UPDATE
+;     ;;; TODO: Fix the Clock problem
+;     (--> (psa Clock_1 AState_1 RState CState TrnFn)
+;          (psa Clock_2 AState_2 RState CState TrnFn)
+
+;          ; increment clock 
+;          (where Clock_2 ,(increment-clock (term Clock_1)))
+
+;          ; find a upd(e) ticket in C
+;          (where (Tic_1 ... (ex Perm Time Excp) Tic_3 ...) CState) 
+
+;          ; update the AState
+;          (where AState_2 ,(recv-update-astate (term AState_1) (term Excp) (term Clock_1) (term TrnFn)))
+
+;          ; give this transition a name
+;          (computed-name (term (update-excp (ex Perm Time Excp))))
+;     )
+
+;     ; TODO: T-RCV, client asks the resource server to recover a lost ticket
+
+;     ; T-DRP, the client accidentally drops some of its tickets [DONE]
+;     ; if Tic in C, then can be dropped
+;     (--> (psa Clock_1 AState RState CState_1 TrnFn)
+;          (psa Clock_2 AState RState CState_2 TrnFn)
+
+;          ; increment the clock
+;          (where Clock_2 ,(increment-clock (term Clock_1)))
+
+;          ; Find a ticket to drop 
+;          (where (Tic_1 ... Tic_2 Tic_3 ...) CState_1)
+
+;          ; Remove the ticket, and store into CState_2
+;          (where CState_2 ,(remove (term Tic_2) (term CState_1)))
+
+;          ; Give this transition a name
+;          (computed-name (term (drop Tic_2)))
+;     )
+    )
+)
+
+; ; <------------------- BEGIN: RED Helpers ------------------->
+; ; Increment global clock value, this will be called from all the trnx
+; (define (increment-clock clock)
+;     (let ([val (second clock)])
+;          (term (clo ,(+ 1 val)))
+;     )
+; )
+; (trace increment-clock)
+
+; ; /******************** T-ISS ********************/
+
+
+; ;;; (get-all-stat-perms-for-qas (term ,q0) (term ,all_fn))
+; ; /******************** END: T-ISS ********************/
+
+; ; /******************** T-FSH ********************/
+; ; Update the AState with 
+; ;;; TimeAS' = Clock
+; ;;; If TimeAS = first(e_rs) then QStateAS = TrnFn*(q_as, e_rs)
+; (define (flush-as astate rstate t_clo TrnFn)
+;     (let ([q_as (first  astate)]
+;           [t_as (second astate)]
+;           [e_rs (second rstate)])
+
+;         (if (is-texcp-eqv-tas? t_as (get-first-excp-time e_rs))
+;             (recv-compute-astate2 q_as e_rs t_clo TrnFn)           ; return new AState
+;             (term ,astate)                                         ; return old AState, no change
+;         )
+;     )
+; )
+; (trace flush-as)
+
+; ; Updates the RState with
+; ;;; TimeRS' = Clock
+; ;;; ExcpRS' = (ex nil (last of ers))
+; (define (flush-rs rstate t_clo)
+;     (let ([t_rs (first rstate)]
+;           [e_rs (second rstate)])
+;         (let ([new_trs (flush-rs-update-time t_rs t_clo)]
+;               [new_ers (flush-rs-update-excp e_rs)])
+        
+;             (term (,new_trs ,new_ers))
+;         )
+;     )
+; )
+; (trace flush-rs)
+
+; ; Called from flush-rs 
+; ; Update the TimeRS to the Clock  (make it less messy in the main f'n)
+; (define (flush-rs-update-time t_rs t_clo)
+;     (let ([clo (second t_clo)])
+;         (term (trs ,clo))
+;     )
+; )
+; (trace flush-rs-update-time)
+
+; ; Called from flush-rs
+; ; Update the Excp to (ex nil (t last(ers)))
+; (define (flush-rs-update-excp excp)
+;     (let ([new_time (second (third excp))])
+;         (term (ex nil ,new_time))
+;     )
+; )
+; (trace flush-rs-update-excp)
+
+; ; /******************** END: T-FSH ********************/
+
+; ; /******************** T-UPD(Tic) ********************/
+
+; ; Case 2 Handler: Tic = (ex Perm Time Excp)
+; ; Need to update both t_as, and q_as 
+; (define (recv-update-astate astate excp t_clo TrnFn)
+;     (if (eqv? (first excp) 'ex)
+;         (let ([q_as (first astate)]
+;               [t_as (second astate)]
+;               [time (third excp)])
+;             ; Check for precondition first(e) = t_as
+;             (if (is-texcp-eqv-tas? t_as (get-first-excp-time excp))
+;                 (recv-compute-astate2 q_as excp t_clo TrnFn)           ; return new AState
+;                 (term ,astate)                                         ; return old AState, no change
+;             )
+;         )
+;         (term ,astate)
+;     )
+; )
+
+; ; Called from recv-update-astate
+; ; Compute the new AState, with the updated TimeAS and QState
+; ; return AState
+; (define (recv-compute-astate2 qstate excp t_clo TrnFn)
+;     (let ([newQAS (recv-compute-qas qstate excp TrnFn)]
+;           [newTAS (term (tas (second t_clo)))])
+;          (term (,newQAS ,newTAS))
+;     )
+; )
+
+; ; Called from recv-compute-astate2
+; ; Compute the new QState after applying all the permissions found in Exceptions
+; ; return QState
+; (define (recv-compute-qas qstate excp TrnFn)
+;     (if (eqv? (second excp) 'nil)
+;         ; base case, we got to the first(e), return the current state
+;         (term ,qstate)
+;         ; otherwise, call apply-excp with the recursive call to self to determine the state
+;         (apply-excp (recv-compute-qas qstate (fourth excp) TrnFn) (second excp) TrnFn)
+;     )
+; )
+; ; (trace recv-compute-qas)
+
+; ; Called from recv-compute-qas 
+; ; Apply the permission to the QState, if it is found in the TrnFn list
+; ; return QState
+; (define (apply-excp qstate perm TrnFn)
+;     (if (null? TrnFn)                   ; if there are no fns, then return original state
+;         (term ,qstate)
+;         ; otherwise, find the (qstate perm) pair in TrnFn
+;         (let ([parFn (first TrnFn)])
+;             (let ([fn_q1 (first  parFn)]
+;                   [fn_p  (second parFn)]
+;                   [fn_q2 (third  parFn)])
+
+;                 ; if the current ParFn has (qstate perm) as the first 2, return the last
+;                 (if (and (eqv? fn_q1 qstate)
+;                          (eqv? fn_p  perm))
+;                     (term ,fn_q2)
+;                     ; otherwise, check the rest of the list of TrnFn
+;                     (apply-excp qstate perm (rest TrnFn))
+;                 )
+;             )
+;         )
+;     )
+; )
+; ; (trace apply-excp)
+
+; ; Called from recv-update-tas       (case 1 handler)
+; ;             recv-update-astate    (case 2 handler)
+; ; Called from flush-as              
+; ; param: t_as, and t_excp
+; ; Determine if the time Ex(t) == t_as
+; ; return boolean
+; (define (is-texcp-eqv-tas? t_as t_excp)
+;     (eqv? (second t_as) (second t_excp))
+; )
+; (trace is-texcp-eqv-tas?)
+
+; ; Called from recv-update-tas       (case 1 handler)
+; ;             recv-update-astate    (case 2 handler)
+; ; Retrieve the first (aka the innermost) exception
+; ; return Time
+; (define (get-first-excp-time excp)
+;     ; the innermost excp will always be of the form (ex nil Time)
+;     (if (eqv? (second excp) 'nil)
+;         (third excp)                 ; return the time
+;         (get-first-excp-time (fourth excp)) ; otherwise, keep going deeper
+;     )
+; )
+
+; (trace get-first-excp-time)
+
+; ; /******************** END: T-UPD ********************/
+
+; ; <------------------- BEGIN: INV-# ------------------->
+; ; /******************** INV 1 ********************/
+; ; 1. Global clock is larger than all the timestamps within the protocol state
+; (define (inv-1? pstate)
+;     (let ([clock  (second pstate)]
+;           [astate (third  pstate)]
+;           [rstate (fourth pstate)]
+;           [cstate (fifth  pstate)])
+;          (and 
+;             (is-clock-larger-tas? clock astate)
+;             (is-clock-larger-trs? clock rstate)
+;             (is-clock-larger-time? clock cstate)
+;          )
+;     )
+; )
+
+; ; called from inv-1
+; ; check if the global clock is larger than the time in auth server
+; (define (is-clock-larger-tas? clock astate)
+;     (let ([tas (second astate)])
+;          (> (second clock) (second tas))
+;     )
+; )
+
+; ; called from inv-1
+; ; check if the global clock is larger than the time in resrc server
+; (define (is-clock-larger-trs? clock rstate)
+;     (let ([trs (first rstate)])
+;          (> (second clock) (second trs))
+;     )
+; )
+
+; ; called from inv-1
+; ; check if global clock is larger than the time in all tickets in client
+; (define (is-clock-larger-time? clock cstate)
+;     (if (null? cstate)
+;         #true
+;         (let ([tic (first cstate)])
+;              (and 
+;                 (is-clock-larger-tic? clock tic)
+;                 (is-clock-larger-time? clock (rest cstate))
+;              )
+;         )
+;     )
+; )   
+
+; ; called from is-clock-larger-time
+; ; check what type of ticket it is, and call the appropriate predicate
+; (define (is-clock-larger-tic? clock tic)
+;     (if (eqv? (first tic) 'ex)
+;         (is-clock-larger-exp? clock tic)
+;         (is-clock-larger-cap? clock tic)
+;     )
+; )
+
+; ; called from is-clock-larger-tic
+; ; check if the clock is larger than the the time (t) in exceptions
+; (define (is-clock-larger-exp? clock exp)
+;     (let ([time (third exp)])
+;          (> (second clock) (second time))
+;     )
+; )
+
+; ; called from is-clock-larger-tic
+; ; check if the clock is larger than the the tser in capability
+; (define (is-clock-larger-cap? clock cap)
+;     (let ([tser (first cap)])
+;          (> (second clock) (second tser))
+;     )
+; )
+
+; ; /******************** END: INV 1 ********************/
+
+; ; /******************** INV 2 ********************/
+; ;;; (define (inv-2? pstate)
+; ;;;     (let ([clock  (second pstate)]
+; ;;;           [astate (third  pstate)]
+; ;;;           [rstate (fourth pstate)]
+; ;;;           [cstate (fifth  pstate)])
+
+; ;;;     )
+; ;;; )
+; ; /******************** END: INV 2 ********************/
+
+; (module+ test
+;     ;;; (test-->>E #:steps 1 red psa1 psa2)         ; testing T_DRP
+;     ;;; (test-->>E #:steps 1 red psa1 psa3)         ; testing T-UPD(nil)
+; )
