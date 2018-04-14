@@ -283,19 +283,45 @@
 (define red
     (reduction-relation HCAP 
 
-    ; T-ISS, auth server issues a new cap to client
-    ; C' = C + {cap (t_as, F @q_as)}
-    (--> (psa Clock_1 AState RState CState_1 TrnFn)
-         (psa Clock_2 AState RState CState_2 TrnFn)
+    ;;; ; T-ISS, auth server issues a new cap to client
+    ;;; ; C' = C + {cap (t_as, F @q_as)}
+    ;;; (--> (psa Clock_1 AState RState CState_1 TrnFn)
+    ;;;      (psa Clock_2 AState RState CState_2 TrnFn)
 
+    ;;;      ; increment clock
+    ;;;      (where Clock_2 ,(increment-clock (term Clock_1)))
+
+    ;;;      ; create a new cap, and insert into CState
+    ;;;      (where CState_2 ,(issue-cap (term CState_1) (term AState) (term TrnFn)))
+
+    ;;;      ; give this transition a name
+    ;;;      (computed-name (term (issue)))
+    ;;; )
+
+    ; T-REQS, client requests to exercise a stat permission [ NOT TESTED ]
+    ; if tic in C, tic = cap(tser, F), tser >= trs, tser >= last(ers), F=(defs, n*), defs(n*) = SP, p in SP
+    ; THEN if tser > last(ers) --> e'rs = nil(tser) 
+    (--> (psa Clock_1 AState RState_1 CState TrnFn)
+         (psa Clock_2 AState RState_2 CState TrnFn)
+       
          ; increment clock
          (where Clock_2 ,(increment-clock (term Clock_1)))
 
-         ; create a new cap, and insert into CState
-         (where CState_2 ,(issue-cap (term CState_1) (term AState) (term TrnFn)))
+         ; find a cap ticket 
+         (where (Tic_1 ... (TimeSER Frag) Tic_3 ...) CState)
+         
+         ; find a stationary permission in the fragment
+         (where (StatPerms TranPerms) Frag)
+         (where (Perm_1 ... (QState_1 Perm_2 QState_1) Perm_3 ...) StatPerms)
+
+         (where RState_2 ,(req-stat (term RState_1) (term TimeSER)))
+        
+         ; make sure that all the preconditions are satisfied
+         (side-condition (req-stat-precond? (term RState_1) (term TimeSER)))
 
          ; give this transition a name
-         (computed-name (term (issue)))
+         (computed-name (term (reqS Perm_2 (TimeSER Frag))))
+
     )
 
     ;;; ; T-DRP, the client accidentally drops some of its tickets [DONE]
@@ -594,6 +620,43 @@
 ; (redex-match? HCAP CState (append cs0 (list(create-cap q0 tas2 trn_fns))))
 ; /******************** END: T-ISS ********************/
 
+; /******************** T-REQS(P, Tic) ********************/
+; Check the preconditions
+; Param: RState TimeSER
+; Return boolean
+(define (req-stat-precond? rstate t_ser)
+    (let ([t_rs (first rstate)]
+          [e_rs (second rstate)]) 
+        (and (is-time1-ge-time2? t_ser t_rs)                    ; if tser >= trs
+             (is-time1-ge-time2? t_ser (third e_rs)))           ; && tser >= last(e_rs)
+    )
+)
+(trace req-stat-precond?)
+
+; Update the RState 
+; Param: RState TimeSER
+; Return RState
+(define (req-stat rstate t_ser)
+    (let ([t_rs (first rstate)]
+          [e_rs (second rstate)]) 
+        (if (and (req-stat-precond? rstate t_ser)                   ; if tser >= trs && tser >= last(e_rs)
+                 (is-time1-gt-time2? t_ser (third e_rs)))           ; && tser > last(e_rs)
+            (term (,t_rs (ex nil (t ,t_ser))))
+            (term ,rstate)                                          ; return rstate, nothing changed
+        )
+    )
+)
+(trace req-stat)
+
+(module+ test
+    ; Testing req-stat-precond?
+
+    ; Testing req-state
+    (test-equal (req-stat rs1 tser3) (term (,trs2 (ex nil (t ,tser3)))))        ; tser(3) >= trs(2), tser(3) > ers(2), new rstate
+    (test-equal (req-stat rs1 tser2) rs1)                                       ; tser(2) = trs(2), but tser(2) = ers(2), no change
+)
+
+; /******************** END: T-REQS ********************/
 
 (module+ test
   (test-results)
