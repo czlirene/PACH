@@ -98,44 +98,44 @@
 (define stat_par_fns (term (,par_fn2)))                         ; list of stationary partial functions
 (define tran_par_fns (term (,par_fn1 ,par_fn3 ,par_fn4)))       ; list of transitioning partial functions
 
-(module+ test
-    ; Testing singular permissions
-    (test-equal (redex-match? HCAP Perm p0) #true)
-    (test-equal (redex-match? HCAP Perm p1) #true)
-    (test-equal (redex-match? HCAP Perm p2) #true)
-    (test-equal (redex-match? HCAP Perm p3) #true)
-    (test-equal (redex-match? HCAP Perm p4) #true)
+;;; (module+ test
+;;;     ; Testing singular permissions
+;;;     (test-equal (redex-match? HCAP Perm p0) #true)
+;;;     (test-equal (redex-match? HCAP Perm p1) #true)
+;;;     (test-equal (redex-match? HCAP Perm p2) #true)
+;;;     (test-equal (redex-match? HCAP Perm p3) #true)
+;;;     (test-equal (redex-match? HCAP Perm p4) #true)
 
-    ; Testing permissions lists
-    (test-equal (redex-match? HCAP P '()) #true)
-    (test-equal (redex-match? HCAP P perm_list) #true)
-    (test-equal (redex-match? HCAP P stat_perms) #true)
-    (test-equal (redex-match? HCAP P tran_perms) #true)
+;;;     ; Testing permissions lists
+;;;     (test-equal (redex-match? HCAP P '()) #true)
+;;;     (test-equal (redex-match? HCAP P perm_list) #true)
+;;;     (test-equal (redex-match? HCAP P stat_perms) #true)
+;;;     (test-equal (redex-match? HCAP P tran_perms) #true)
 
-    ; Testing singular qstates
-    (test-equal (redex-match? HCAP QState q_unknown) #true)
-    (test-equal (redex-match? HCAP QState q0) #true)
-    (test-equal (redex-match? HCAP QState q1) #true)
-    (test-equal (redex-match? HCAP QState q2) #true)
-    (test-equal (redex-match? HCAP QState q3) #true)
+;;;     ; Testing singular qstates
+;;;     (test-equal (redex-match? HCAP QState q_unknown) #true)
+;;;     (test-equal (redex-match? HCAP QState q0) #true)
+;;;     (test-equal (redex-match? HCAP QState q1) #true)
+;;;     (test-equal (redex-match? HCAP QState q2) #true)
+;;;     (test-equal (redex-match? HCAP QState q3) #true)
 
-    ; Testing qstate lists
-    (test-equal (redex-match? HCAP Q '()) #true)
-    (test-equal (redex-match? HCAP Q qstate_list) #true)
+;;;     ; Testing qstate lists
+;;;     (test-equal (redex-match? HCAP Q '()) #true)
+;;;     (test-equal (redex-match? HCAP Q qstate_list) #true)
 
-    ; Testing partial functions
-    (test-equal (redex-match? HCAP ParFn par_fn0) #true)
-    (test-equal (redex-match? HCAP ParFn par_fn1) #true)
-    (test-equal (redex-match? HCAP ParFn par_fn2) #true)
-    (test-equal (redex-match? HCAP ParFn par_fn3) #true)
-    (test-equal (redex-match? HCAP ParFn par_fn4) #true)
+;;;     ; Testing partial functions
+;;;     (test-equal (redex-match? HCAP ParFn par_fn0) #true)
+;;;     (test-equal (redex-match? HCAP ParFn par_fn1) #true)
+;;;     (test-equal (redex-match? HCAP ParFn par_fn2) #true)
+;;;     (test-equal (redex-match? HCAP ParFn par_fn3) #true)
+;;;     (test-equal (redex-match? HCAP ParFn par_fn4) #true)
 
-    ; Testing list of partial functions
-    (test-equal (redex-match? HCAP TrnFn '()) #true)
-    (test-equal (redex-match? HCAP TrnFn trn_fns) #true)
-    (test-equal (redex-match? HCAP TrnFn stat_par_fns) #true)
-    (test-equal (redex-match? HCAP TrnFn tran_par_fns) #true)
-)
+;;;     ; Testing list of partial functions
+;;;     (test-equal (redex-match? HCAP TrnFn '()) #true)
+;;;     (test-equal (redex-match? HCAP TrnFn trn_fns) #true)
+;;;     (test-equal (redex-match? HCAP TrnFn stat_par_fns) #true)
+;;;     (test-equal (redex-match? HCAP TrnFn tran_par_fns) #true)
+;;; )
 
 ; <------------------- PROTOCOL STATE GRAMMAR TEST CASES ------------------->
 ; Global clock values
@@ -213,75 +213,75 @@
 (define psa2 (term (psa ,clo3 ,as0 ,rs2 ,cs2 ,trn_fns)))
 (define psa3 (term (psa ,clo3 ,as0 ,rs2 ,cs4 ,trn_fns)))
 
-(module+ test
-    ; Testing all the times
-    (test-equal (redex-match? HCAP Clock clo0) #true)
-    (test-equal (redex-match? HCAP Clock clo1) #true)
-    (test-equal (redex-match? HCAP Clock clo2) #true)
-    (test-equal (redex-match? HCAP Clock clo3) #true)
-    (test-equal (redex-match? HCAP Clock clo4) #true)
-    (test-equal (redex-match? HCAP Clock clo5) #true)
+;;; (module+ test
+;;;     ; Testing all the times
+;;;     (test-equal (redex-match? HCAP Clock clo0) #true)
+;;;     (test-equal (redex-match? HCAP Clock clo1) #true)
+;;;     (test-equal (redex-match? HCAP Clock clo2) #true)
+;;;     (test-equal (redex-match? HCAP Clock clo3) #true)
+;;;     (test-equal (redex-match? HCAP Clock clo4) #true)
+;;;     (test-equal (redex-match? HCAP Clock clo5) #true)
 
-    (test-equal (redex-match? HCAP TimeAS tas0) #true)
-    (test-equal (redex-match? HCAP TimeAS tas1) #true)
-    (test-equal (redex-match? HCAP TimeAS tas2) #true)
-    (test-equal (redex-match? HCAP TimeAS tas3) #true)
+;;;     (test-equal (redex-match? HCAP TimeAS tas0) #true)
+;;;     (test-equal (redex-match? HCAP TimeAS tas1) #true)
+;;;     (test-equal (redex-match? HCAP TimeAS tas2) #true)
+;;;     (test-equal (redex-match? HCAP TimeAS tas3) #true)
     
-    (test-equal (redex-match? HCAP TimeRS trs0) #true)
-    (test-equal (redex-match? HCAP TimeRS trs1) #true)
-    (test-equal (redex-match? HCAP TimeRS trs2) #true)
-    (test-equal (redex-match? HCAP TimeRS trs3) #true)
+;;;     (test-equal (redex-match? HCAP TimeRS trs0) #true)
+;;;     (test-equal (redex-match? HCAP TimeRS trs1) #true)
+;;;     (test-equal (redex-match? HCAP TimeRS trs2) #true)
+;;;     (test-equal (redex-match? HCAP TimeRS trs3) #true)
     
-    (test-equal (redex-match? HCAP Time t0) #true)
-    (test-equal (redex-match? HCAP Time t1) #true)
-    (test-equal (redex-match? HCAP Time t2) #true)
-    (test-equal (redex-match? HCAP Time t3) #true)
+;;;     (test-equal (redex-match? HCAP Time t0) #true)
+;;;     (test-equal (redex-match? HCAP Time t1) #true)
+;;;     (test-equal (redex-match? HCAP Time t2) #true)
+;;;     (test-equal (redex-match? HCAP Time t3) #true)
 
-    (test-equal (redex-match? HCAP TimeSER tser0) #true)
-    (test-equal (redex-match? HCAP TimeSER tser1) #true)
-    (test-equal (redex-match? HCAP TimeSER tser2) #true)
-    (test-equal (redex-match? HCAP TimeSER tser3) #true)
+;;;     (test-equal (redex-match? HCAP TimeSER tser0) #true)
+;;;     (test-equal (redex-match? HCAP TimeSER tser1) #true)
+;;;     (test-equal (redex-match? HCAP TimeSER tser2) #true)
+;;;     (test-equal (redex-match? HCAP TimeSER tser3) #true)
 
-    ; Testing Authroization server state
-    (test-equal (redex-match? HCAP AState as0) #true)
-    (test-equal (redex-match? HCAP AState as1) #true)
+;;;     ; Testing Authroization server state
+;;;     (test-equal (redex-match? HCAP AState as0) #true)
+;;;     (test-equal (redex-match? HCAP AState as1) #true)
     
-    ; Testing Exceptions 
-    (test-equal (redex-match? HCAP Excp excp_nil_0) #true)
-    (test-equal (redex-match? HCAP Excp excp_nil_1) #true)
-    (test-equal (redex-match? HCAP Excp excp0) #true)
-    (test-equal (redex-match? HCAP Excp excp1) #true)
+;;;     ; Testing Exceptions 
+;;;     (test-equal (redex-match? HCAP Excp excp_nil_0) #true)
+;;;     (test-equal (redex-match? HCAP Excp excp_nil_1) #true)
+;;;     (test-equal (redex-match? HCAP Excp excp0) #true)
+;;;     (test-equal (redex-match? HCAP Excp excp1) #true)
 
-    ; Testing Resource Server state
-    (test-equal (redex-match? HCAP RState rs0) #true)
-    (test-equal (redex-match? HCAP RState rs1) #true)
+;;;     ; Testing Resource Server state
+;;;     (test-equal (redex-match? HCAP RState rs0) #true)
+;;;     (test-equal (redex-match? HCAP RState rs1) #true)
 
-    ; Testing fragment
-    (test-equal (redex-match? HCAP Frag frag_undefined) #true)
-    (test-equal (redex-match? HCAP Frag frag_unknown) #true)
-    (test-equal (redex-match? HCAP Frag frag_q0) #true)
-    (test-equal (redex-match? HCAP Frag frag_q1) #true)
+;;;     ; Testing fragment
+;;;     (test-equal (redex-match? HCAP Frag frag_undefined) #true)
+;;;     (test-equal (redex-match? HCAP Frag frag_unknown) #true)
+;;;     (test-equal (redex-match? HCAP Frag frag_q0) #true)
+;;;     (test-equal (redex-match? HCAP Frag frag_q1) #true)
 
-    ; Testing Capability
-    (test-equal (redex-match? HCAP Cap cap0) #true)
-    (test-equal (redex-match? HCAP Cap cap1) #true)
+;;;     ; Testing Capability
+;;;     (test-equal (redex-match? HCAP Cap cap0) #true)
+;;;     (test-equal (redex-match? HCAP Cap cap1) #true)
 
-    ; Testing Client state
-    (test-equal (redex-match? HCAP CState cs0) #true)
-    (test-equal (redex-match? HCAP CState cs1) #true)
-    (test-equal (redex-match? HCAP CState cs2) #true)
-    (test-equal (redex-match? HCAP CState cs3) #true)
-    (test-equal (redex-match? HCAP CState cs4) #true)
+;;;     ; Testing Client state
+;;;     (test-equal (redex-match? HCAP CState cs0) #true)
+;;;     (test-equal (redex-match? HCAP CState cs1) #true)
+;;;     (test-equal (redex-match? HCAP CState cs2) #true)
+;;;     (test-equal (redex-match? HCAP CState cs3) #true)
+;;;     (test-equal (redex-match? HCAP CState cs4) #true)
 
-    ; Testing RED state
-    (test-equal (redex-match? HCAP REDState psa0) #true)
-    (test-equal (redex-match? HCAP REDState psa1) #true)
-    (test-equal (redex-match? HCAP REDState psa2) #true)
-    (test-equal (redex-match? HCAP REDState psa3) #true)
-)
+;;;     ; Testing RED state
+;;;     (test-equal (redex-match? HCAP REDState psa0) #true)
+;;;     (test-equal (redex-match? HCAP REDState psa1) #true)
+;;;     (test-equal (redex-match? HCAP REDState psa2) #true)
+;;;     (test-equal (redex-match? HCAP REDState psa3) #true)
+;;; )
 
-(define red
-    (reduction-relation HCAP 
+;;; (define red
+;;;     (reduction-relation HCAP 
 
     ;;; ; T-ISS, auth server issues a new cap to client
     ;;; ; C' = C + {cap (t_as, F @q_as)}
@@ -298,31 +298,135 @@
     ;;;      (computed-name (term (issue)))
     ;;; )
 
-    ; T-REQS, client requests to exercise a stat permission [ NOT TESTED ]
-    ; if tic in C, tic = cap(tser, F), tser >= trs, tser >= last(ers), F=(defs, n*), defs(n*) = SP, p in SP
-    ; THEN if tser > last(ers) --> e'rs = nil(tser) 
-    (--> (psa Clock_1 AState RState_1 CState TrnFn)
-         (psa Clock_2 AState RState_2 CState TrnFn)
+    ;;; ; T-REQS, client requests to exercise a stat permission [ NOT TESTED ]
+    ;;; ; if tic in C, tic = cap(tser, F), tser >= trs, tser >= last(ers), F=(defs, n*), defs(n*) = SP, p in SP
+    ;;; ; THEN if tser > last(ers) --> e'rs = nil(tser) 
+    ;;; (--> (psa Clock_1 AState RState_1 CState TrnFn)
+    ;;;      (psa Clock_2 AState RState_2 CState TrnFn)
        
-         ; increment clock
-         (where Clock_2 ,(increment-clock (term Clock_1)))
+    ;;;      ; increment clock
+    ;;;      (where Clock_2 ,(increment-clock (term Clock_1)))
 
-         ; find a cap ticket 
-         (where (Tic_1 ... (TimeSER Frag) Tic_3 ...) CState)
+    ;;;      ; find a cap ticket 
+    ;;;      (where (Tic_1 ... (TimeSER Frag) Tic_3 ...) CState)
          
-         ; find a stationary permission in the fragment
-         (where (StatPerms TranPerms) Frag)
-         (where (Perm_1 ... (QState_1 Perm_2 QState_1) Perm_3 ...) StatPerms)
+    ;;;      ; find a stationary permission in the fragment
+    ;;;      (where (CurPerms OutPerms) Frag)
+    ;;;      (where (Perm_1 ... (QState_1 Perm_2 QState_1) Perm_3 ...) CurPerms)
 
-         (where RState_2 ,(req-stat (term RState_1) (term TimeSER)))
+    ;;;      (where RState_2 ,(req-stat (term RState_1) (term TimeSER)))
         
-         ; make sure that all the preconditions are satisfied
-         (side-condition (req-stat-precond? (term RState_1) (term TimeSER)))
+    ;;;      ; make sure that all the preconditions are satisfied
+    ;;;      (side-condition (req-precond? (term RState_1) (term TimeSER)))
 
-         ; give this transition a name
-         (computed-name (term (reqS Perm_2 (TimeSER Frag))))
+    ;;;      ; give this transition a name
+    ;;;      (computed-name (term (reqS Perm_2 (TimeSER Frag))))
+    ;;; )
 
-    )
+    ;;; ; TODO: T-REQT, client requests to exercise a transitioning permission 
+    ;;; ; if tic in C, tic = cap(tser, F), tser >= trs, tser >= last(ers), F=(defs, n*), defs(n*) = TRAN, p in dom(trans)
+    ;;; ; 1) e'rs = 
+    ;;; (--> (psa Clock_1 AState RState_1 CState_1 TrnFn)
+    ;;;      (psa Clock_2 AState RState_2 CState_2 TrnFn)
+
+    ;;;      ; increment clock
+    ;;;      (where Clock_2 ,(increment-clock (term Clock_1)))
+
+    ;;;      ; find a cap ticket
+    ;;;      (where (Tic_1 ... (TimeSER Frag) Tic_3 ...) CState_1)
+
+    ;;;      ; find a transitioning permission in the fragment
+    ;;;      (Where (CurPerms OutPerms) Frag)
+    ;;;      (where (Perm_1 ... (QState_1 Perm_2 QState_2) Perm_3 ...) CurPerms)
+    ;;;      (side-condition (not (eqv? QState_1 QState_2)))            ; ensures there is a transitioning permission
+
+    ;;;      (where RState_2 ,(req-tran-rstate (term RState_1) (term TimeSER) (term Clock_1) (term Perm_2)))
+    ;;;     ;;;  (where CState_2 ,(req-tran-cstate (term CState_1) (term RState_2) (term Clock_1) (term Frag)))
+
+    ;;;      ; make sure all the preconditions are satisfied
+    ;;;      (side-condition (req-precond? (term RState_1) (term TimeSER)))
+
+    ;;;      ; give this transition a name
+    ;;;      (computed-name (term (reqT Perm_2 (TimeSER Frag))))
+
+    ;;; )
+    
+    ;;; ; T-FSH, garbage collection [DONE]
+    ;;; ; new(t_as) = new(t_rs) = t_clo,
+    ;;; ; new(e_rs) = nil (t of the outermost e_rs)
+    ;;; ; if t_as = first(e_rs) then new(q_as) = TrnFn*(q_as, e_rs)
+    ;;; (--> (psa Clock_1 AState_1 (TimeRS_1 Excp_1) CState TrnFn)
+    ;;;      (psa Clock_2 AState_2 (TimeRS_2 Excp_2) CState TrnFn)
+
+    ;;;      ; increment clock 
+    ;;;      (where Clock_2 ,(increment-clock (term Clock_1)))
+
+    ;;;      ; Update the AState
+    ;;;      (where AState_2 ,(flush-as (term AState_1) (term Excp_1) (term Clock_1) (term TrnFn)))
+
+    ;;;      ; Update the RState 
+    ;;;      (where TimeRS_2 ,(flush-rs-update-time (term TimeRS_1) (term Clock_1)))
+    ;;;      (where Excp_2 ,(flush-rs-update-excp (term Excp_1)))
+
+    ;;;      ; give this transition a name
+    ;;;      (computed-name (term (flush)))
+    ;;; )
+
+    ; ; T-UPD, client updates the internal state of auth server
+    ; ; if Tic in C, and Tic = upd(e), and the first(e) = t_as (THE INNERMOST TIME)
+    ; ; Then new(t_as) = t_clo, new(q_as) = TrnFn(q_as, e)
+
+    ; ; CASE 1: upd(e) = (ex nil(t)), q_as stays the same regardless, t_as' = t_clo [DONE]
+    ; (--> (psa Clock_1 (QState TimeAS_1) RState CState TrnFn)
+    ;      (psa Clock_2 (QState TimeAS_2) RState CState TrnFn)
+
+    ;      ; increment clock 
+    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
+
+    ;      ; Get the current tas
+    ;      (where (tas natural_1) TimeAS_1)
+
+    ;      ; find an upd(e) ticket in C where Time = TimeAS_1
+    ;      (where (Tic_1 ... (ex nil (t natural_1)) Tic_3 ...) CState)
+
+    ;      ; Get the current clock time
+    ;      (where (clo natural_2) Clock_1)
+
+    ;      ; Update the t'as = tclo
+    ;      (where TimeAS_2 (tas natural_2))
+
+    ;      ; Give this transition a name
+    ;      (computed-name (term (update-nil (ex nil (t TimeAS_1)))))
+    ; )
+
+    ; ; CASE 2: upd(e) = (ex Perm Time Excp)  [DONE]
+    ; (--> (psa Clock_1 AState_1 RState CState TrnFn)
+    ;      (psa Clock_2 AState_2 RState CState TrnFn)
+
+    ;      ; increment clock 
+    ;      (where Clock_2 ,(increment-clock (term Clock_1)))
+
+    ;      ; find a upd(e) ticket in C
+    ;      (where (Tic_1 ... (ex Perm Time Excp) Tic_3 ...) CState) 
+
+    ;      ; update the AState
+    ;      (where AState_2 ,(update-as (term AState_1) (term (ex Perm Time Excp)) (term Clock_1) (term TrnFn)))
+
+    ;      ; make sure that AState_2 does change in order for the clock to change
+    ;      (side-condition (not (eqv? (term AState_2) (term AState_1))))
+
+    ;      ; give this transition a name
+    ;      (computed-name (term (update-excp (ex Perm Time Excp))))
+    ; )
+    
+    ;;; ; TODO: T-RCV, client asks the resource server to recover a lost ticket
+    ;;; ; if tic in C, tic = cap(tser, F) and tser in times(ers)
+    ;;; (--> (psa Clock_1 AState RState CState TrnFn)
+    ;;;      (psa Clock_2 AState RState CState TrnFn)
+
+    ;;;      ; give this transition a name
+    ;;;      (computed-name (term (recover )))
+    ;;; )
 
     ;;; ; T-DRP, the client accidentally drops some of its tickets [DONE]
     ;;; ; if Tic in C, then can be dropped
@@ -341,8 +445,8 @@
     ;;;      ; Give this transition a name
     ;;;      (computed-name (term (drop (Tic_2 ...))))
     ;;; )
-    )
-)
+;;;     )
+;;; )
 
 ; <------------------- BEGIN: RED Helpers ------------------->
 ; Increment global clock value, this will be called from all the trnx
@@ -584,27 +688,27 @@
 (trace is-par-fn-for-qstate?)
 
 ; helper tests
-(module+ test
-    ; Testing increment-clock
-    (test-equal (increment-clock clo0) clo1)
+;;; (module+ test
+;;;     ; Testing increment-clock
+;;;     (test-equal (increment-clock clo0) clo1)
 
-    ; Testing remove-list
-    (test-equal (remove-list (term (,cap1)) (term ,cs4)) (term (,cap0)))
+;;;     ; Testing remove-list
+;;;     (test-equal (remove-list (term (,cap1)) (term ,cs4)) (term (,cap0)))
 
-    ; Testing get-first-excp-time
-    (test-equal (get-first-excp-time excp1) t0)
-    (test-equal (get-first-excp-time excp2) t1)
+;;;     ; Testing get-first-excp-time
+;;;     (test-equal (get-first-excp-time excp1) t0)
+;;;     (test-equal (get-first-excp-time excp2) t1)
 
-    ; Testing generate-new-astate
-    (test-equal (generate-new-astate q0 excp1 clo3 trn_fns) as2)
+;;;     ; Testing generate-new-astate
+;;;     (test-equal (generate-new-astate q0 excp1 clo3 trn_fns) as2)
 
-    ; Testing create-cap
-    ; (test-equal (create-cap q1 tas2 trn_fns) cap1)
+;;;     ; Testing create-cap
+;;;     ; (test-equal (create-cap q1 tas2 trn_fns) cap1)
 
-    ; Testing are-times-eqv?
-    (test-equal (are-times-eqv? tas0 tser2) #false)
-    (test-equal (are-times-eqv? clo1 tas1) #true)
-)
+;;;     ; Testing are-times-eqv?
+;;;     (test-equal (are-times-eqv? tas0 tser2) #false)
+;;;     (test-equal (are-times-eqv? clo1 tas1) #true)
+;;; )
 
 ; /******************** T-ISS ********************/
 ; Update the CState by first creating a new Cap 
@@ -621,17 +725,17 @@
 ; /******************** END: T-ISS ********************/
 
 ; /******************** T-REQS(P, Tic) ********************/
-; Check the preconditions
+; Check the preconditions for Stat/Tran Request
 ; Param: RState TimeSER
 ; Return boolean
-(define (req-stat-precond? rstate t_ser)
+(define (req-precond? rstate t_ser)
     (let ([t_rs (first rstate)]
           [e_rs (second rstate)]) 
         (and (is-time1-ge-time2? t_ser t_rs)                    ; if tser >= trs
              (is-time1-ge-time2? t_ser (third e_rs)))           ; && tser >= last(e_rs)
     )
 )
-(trace req-stat-precond?)
+(trace req-precond?)
 
 ; Update the RState 
 ; Param: RState TimeSER
@@ -639,7 +743,7 @@
 (define (req-stat rstate t_ser)
     (let ([t_rs (first rstate)]
           [e_rs (second rstate)]) 
-        (if (and (req-stat-precond? rstate t_ser)                   ; if tser >= trs && tser >= last(e_rs)
+        (if (and (req-precond? rstate t_ser)                   ; if tser >= trs && tser >= last(e_rs)
                  (is-time1-gt-time2? t_ser (third e_rs)))           ; && tser > last(e_rs)
             (term (,t_rs (ex nil (t ,t_ser))))
             (term ,rstate)                                          ; return rstate, nothing changed
@@ -648,15 +752,393 @@
 )
 (trace req-stat)
 
-(module+ test
-    ; Testing req-stat-precond?
+;;; (module+ test
+;;;     ; Testing req-precond?
 
-    ; Testing req-state
-    (test-equal (req-stat rs1 tser3) (term (,trs2 (ex nil (t ,tser3)))))        ; tser(3) >= trs(2), tser(3) > ers(2), new rstate
-    (test-equal (req-stat rs1 tser2) rs1)                                       ; tser(2) = trs(2), but tser(2) = ers(2), no change
-)
+;;;     ; Testing req-state
+;;;     (test-equal (req-stat rs1 tser3) (term (,trs2 (ex nil (t ,tser3)))))        ; tser(3) >= trs(2), tser(3) > ers(2), new rstate
+;;;     (test-equal (req-stat rs1 tser2) rs1)                                       ; tser(2) = trs(2), but tser(2) = ers(2), no change
+;;; )
 
 ; /******************** END: T-REQS ********************/
+
+; /******************** T-REQT(P, Tic) ********************/
+; Update the RState
+; Param: RState TimeSER Clock Perm
+; Return RState
+(define (req-tran-rstate rstate t_ser t_clo perm)
+    (let ([t_rs (first rstate)]
+          [e_rs (second rstate)])
+        (if (req-precond? rstate t_ser)
+            (cond ((is-time1-gt-time2? t_ser (third e_rs)) (term (,t_rs (ex ,perm ,t_clo (ex nil (t ,t_ser))))))
+                  ((are-times-eqv? t_ser (third e_rs)) (term (,t_rs (ex ,perm ,t_clo ,e_rs)))))
+            (term ,rstate)
+        )
+    )
+)
+(trace req-tran-rstate)
+
+; Update the CState
+; Param: CState RState(new) Clock 
+; Return CState
+;;; (define (req-tran-cstate cstate rstate t_clo)
+;;;     (let ([e_rs (second rstate)])
+;;;         (cond ((eqv? ) ) 
+        
+;;;         )
+;;;         (setify (append cstate ))
+;;;     )
+;;; )
+
+; /******************** END: T-REQT ********************/
+
+; /******************** T-FSH ********************/
+; Update the AState with 
+;;; TimeAS' = Clock
+;;; If TimeAS = first(e_rs) then QStateAS = TrnFn*(q_as, e_rs)
+; Param: AState Excp Clock TrnFn
+; Return: AState
+(define (flush-as astate e_rs t_clo TrnFn)
+    (let ([q_as (first  astate)]
+          [t_as (second astate)]
+          [c_val (second t_clo)])
+        (if (are-times-eqv? t_as (get-first-excp-time e_rs))
+            (generate-new-astate q_as e_rs t_clo TrnFn)            ; return (QState', TimeAS')
+            (term (,q_as (tas ,c_val)))                            ; return (QState, TimeAS')
+        )
+    )
+)
+(trace flush-as)
+
+; Update the TimeRS to the Clock 
+; Param: TimeRS Clock
+; Return TimeRS
+(define (flush-rs-update-time t_rs t_clo)
+    (let ([clo (second t_clo)])
+        (term (trs ,clo))
+    )
+)
+(trace flush-rs-update-time)
+
+; Update the Excp to (ex nil (t last(ers)))
+; Param: Excp
+; Return: Excp of the form (ex nil Time)
+(define (flush-rs-update-excp excp)
+    (let ([new_time (second (third excp))])
+        (term (ex nil (t ,new_time)))
+    )
+)
+(trace flush-rs-update-excp)
+
+; T-FSH tests 
+;;; (module+ test
+;;;     ; Testing flush-as
+;;;     (test-equal (flush-as as0 excp2 clo3 trn_fns) as2)      ; q_as(0) -> q_as(1), t_as(1) -> t_as(3)
+;;;     (test-equal (flush-as as1 excp1 clo3 trn_fns) as3)      ; q_as stays, time changes
+
+;;;     ; Testing flush-rs-update-time
+;;;     (test-equal (flush-rs-update-time trs0 clo1) trs1)      ; Changing the times
+;;;     (test-equal (flush-rs-update-time trs1 clo3) trs3)
+
+;;;     ; Testing flush-rs-update-excp
+;;;     (test-equal (flush-rs-update-excp excp2) (term (ex nil ,t2)))       ; make sure the exceptions' time is changed
+;;;     (test-equal (flush-rs-update-excp excp0) (term (ex nil ,t1)))
+;;; )
+
+; /******************** END: T-FSH ********************/
+
+
+; /******************** T-UPD(Tic) ********************/
+; If first(e) = tas, then update the AState with 
+;;; TimeAS' = Clock
+;;; QStateAS = TrnFn*(qas, excp)
+; Param: AState Excp Clock TrnFn
+; Return: AState 
+(define (update-as astate excp t_clo TrnFn)
+    (let ([q_as (first astate)]
+          [t_as (second astate)]
+          [c_val (second t_clo)])
+        (if (are-times-eqv? t_as (get-first-excp-time excp))
+            (generate-new-astate q_as excp t_clo TrnFn)         ; change the time and qstate
+            (term ,astate)                                      ; return old astate
+        )
+    )
+)
+
+; T-UPD tests
+;;; (module+ test
+;;;     ; Testing update-as 
+;;;     (test-equal (update-as as0 excp0 clo3 trn_fns) as0)         ; time are not the same, no change
+;;;     (test-equal (update-as as0 excp2 clo3 trn_fns) as2)         ; time are the same, new as (q1, 3)
+;;; )
+
+; /******************** END: T-UPD ********************/
+
+; <------------------- BEGIN: INV-# ------------------->
+
+; /******************** INV 1 ********************/
+; 1. Global clock is larger than all the timestamps within the protocol state
+(define (inv-1? pstate)
+    (let ([clock  (second pstate)]
+          [astate (third  pstate)]
+          [rstate (fourth pstate)]
+          [cstate (fifth  pstate)])
+         (and 
+            (is-clock-larger-tas? clock astate)
+            (is-clock-larger-trs? clock rstate)
+            (is-clock-larger-time? clock cstate)
+         )
+    )
+)
+
+; check if the global clock is larger than the time in auth server
+(define (is-clock-larger-tas? clock astate)
+    (let ([tas (second astate)])
+         (> (second clock) (second tas))
+    )
+)
+
+; check if the global clock is larger than the time in resrc server
+(define (is-clock-larger-trs? clock rstate)
+    (let ([trs (first rstate)])
+         (> (second clock) (second trs))
+    )
+)
+
+; check if global clock is larger than the time in all tickets in client
+(define (is-clock-larger-time? clock cstate)
+    (if (null? cstate)
+        #true
+        (let ([tic (first cstate)])
+             (and 
+                (is-clock-larger-tic? clock tic)
+                (is-clock-larger-time? clock (rest cstate))
+             )
+        )
+    )
+)   
+
+; called from is-clock-larger-time
+;;; check what type of ticket it is, and call the appropriate predicate
+(define (is-clock-larger-tic? clock tic)
+    (if (eqv? (first tic) 'ex)
+        (is-clock-larger-exp? clock tic)
+        (is-clock-larger-cap? clock tic)
+    )
+)
+
+; called from is-clock-larger-tic
+;;; check if the clock is larger than the the time (t) in exceptions
+(define (is-clock-larger-exp? clock exp)
+    (let ([time (third exp)])
+         (> (second clock) (second time))
+    )
+)
+
+;;; called from is-clock-larger-tic
+;;; check if the clock is larger than the the tser in capability
+(define (is-clock-larger-cap? clock cap)
+    (let ([tser (first cap)])
+         (> (second clock) (second tser))
+    )
+)
+
+; /******************** END: INV 1 ********************/
+
+; /******************** INV 2 ********************/
+(define (inv-2? pstate)
+    (let ([rstate (fourth pstate)])
+        (let ([e_rs (second rstate)])
+            (are-times-decreasing? (find-all-time-in-excp e_rs))
+        )
+    )
+)
+
+; Check if the times are in strict decreasing order, with 0 being the lowest node
+; Param: List of Time
+; Return boolean
+(define (are-times-decreasing? lst)
+    (if (not (eq? (length lst) 1))
+        (cond ((null? lst) #t)                  ; if it's empty, it's true
+              ((< (car (cdr lst)) (car lst)) (are-times-decreasing? (cdr lst)))
+              (else #f))
+        (eq? (car lst) 0)
+    )
+)
+(trace are-times-decreasing?)
+
+; Extract all the time values in an excp
+; Param; Excp
+; Return: List of Time values! (without the prefix)
+(define (find-all-time-in-excp excp)
+    (let ([time (second (third excp))])
+        (if (eqv? (second excp) 'nil)
+            (term (,time))
+            (cons time (find-all-time-in-excp (fourth excp)))
+        )
+    )
+)
+(trace find-all-time-in-excp)
+
+(module+ test
+    (test-equal (find-all-time-in-excp excp0) '(1 0))
+    (test-equal (find-all-time-in-excp excp1) '(2 1 0))
+    (test-equal (are-times-decreasing? (find-all-time-in-excp excp1)) #true)
+)
+; /******************** END: INV 2 ********************/
+
+; /******************** INV 3 ********************/
+(define (inv-3? pstate)
+    (or (inv-4? pstate)
+        (inv-5? pstate)
+        (inv-6? pstate)
+        (inv-7? pstate))
+)
+; /******************** END: INV 3 ********************/
+
+; /******************** INV 4 ********************/
+(define (inv-4? pstate)
+    (let ([astate (third pstate)]
+          [rstate (fourth pstate)]
+          [cstate (fifth pstate)]
+          [TrnFn (sixth pstate)])
+        (if (is-time1-gt-time2? (third (second rstate)) (second astate))
+            (inv-4-cases? (find-all-cap-in-cstate cstate) astate rstate cstate TrnFn)
+            (#false)
+        )
+    )
+)
+
+(define (inv-4-cases? caps astate rstate cstate TrnFn)
+    (let ([cap (first caps)]) 
+        (let ([e_rs (second rstate)]
+              [t_rs (first rstate)]
+              [t_ser (first cap)]
+              [t_as (second astate)]
+              [q_as (first astate)]
+              [frag (second cap)])
+            (and (or (is-time1-gt-time2? (third e_rs) t_ser)
+                     (is-time1-gt-time2? t_rs t_ser)
+                     (and (are-times-eqv? t_as t_ser) 
+                          (eqv? frag (create-frag q_as TrnFn))))
+                 (inv-4-cases? (rest caps) astate rstate cstate TrnFn)
+            )
+        )
+    )
+)
+
+(define (find-all-cap-in-cstate cstate)
+    (if (null? cstate)
+        (remove null cstate)
+        (let ([ticket (first cstate)])
+            (if (eqv? (first ticket) 'ex)
+                (find-all-cap-in-cstate (rest cstate))
+                (cons ticket (find-all-cap-in-cstate (rest cstate)))
+            )
+        )
+    )
+)
+(trace find-all-cap-in-cstate)
+
+; /******************** END: INV 4 ********************/
+
+; /******************** INV 5 ********************/
+(define (inv-5? pstate)
+    (let ([astate (third pstate)]
+          [rstate (fourth pstate)]
+          [cstate (fifth pstate)]
+          [TrnFn (sixth pstate)])
+        (if (are-times-eqv? (second astate) (get-first-excp-time (second rstate)))
+            (inv-5-cases? (find-all-cap-in-cstate cstate) rstate astate TrnFn)
+            (#false)
+        )
+    )
+)
+
+;;; TODO: still need to get the second condition done
+(define (inv-5-cases? caps rstate astate TrnFn)
+    (let ([cap (first caps)])
+        (let ([t_ser (first cap)]
+              [frag (second cap)]
+              [e_rs (second rstate)]) 
+            (and (or (is-time1-gt-time2? (get-first-excp-time e_rs) t_ser)
+                     (and (memq (second t_ser) (find-all-time-in-excp e_rs)) 
+                     ;t_ser in times(ers) and frag = create frag of time less than tser
+                     )
+                 )
+                 (inv-5-cases? (rest caps) rstate astate TrnFn)
+            )
+        ) 
+    )
+)
+; /******************** END: INV 5 ********************/
+
+; /******************** INV 6 ********************/
+(define (inv-6? pstate)
+    (let ([astate (third pstate)]
+          [rstate (fourth pstate)]
+          [cstate (fifth pstate)])
+        (if (is-time1-gt-time2? (third (second rstate)) (second astate))
+            (is-tas-gt-all-excp? (find-all-excp-in-cstate cstate) (second astate))
+            (#false)
+        )
+    )
+)
+
+(define (is-tas-gt-all-excp? excps t_as)
+    (let ([excp (first excps)])
+        (if (null? excps)
+            (#true)
+            (let ([time (third excp)])
+                (and (is-time1-gt-time2? t_as time)
+                     (is-tas-gt-all-excp? (rest excps) t_as)
+                )
+            )
+        )
+    )
+)
+
+(define (find-all-excp-in-cstate cstate)
+    (if (null? cstate)
+        (remove null cstate)
+        (let ([ticket (first cstate)])
+            (if (eqv? (first ticket) 'ex)
+                (cons ticket (find-all-excp-in-cstate (rest cstate)))
+                (find-all-excp-in-cstate (rest cstate))
+            )
+        )
+    )
+)
+
+; /******************** END: INV 6 ********************/
+
+; /******************** INV 7 ********************/
+(define (inv-7? pstate)
+    (let ([astate (third pstate)]
+          [rstate (fourth pstate)]
+          [cstate (fifth pstate)]
+          [TrnFn (sixth pstate)])
+        (if (are-times-eqv? (second astate) (get-first-excp-time (second rstate)))
+            (inv-7-cases? (find-all-excp-in-cstate cstate) rstate astate TrnFn)
+            (#false)
+        )
+    )
+)
+
+(define (inv-7-cases? excps rstate astate TrnFn)
+    (let ([excp (first excps)]
+          [e_rs (second rstate)]
+          [q_as (first astate)])
+        
+        (and (or (is-time1-gt-time2? (get-first-excp-time e_rs) (third excp)) ; first(ers) > last(e)
+                 (and (eqv? excp e_rs) 
+                      (eqv? (get-new-qstate q_as e_rs TrnFn) q_unknown))) ; e = ers, and delta = unknown
+             (inv-7-cases? (rest excps) rstate astate TrnFn)
+        )
+    )
+)
+; /******************** END: INV 7 ********************/
+
 
 (module+ test
   (test-results)
